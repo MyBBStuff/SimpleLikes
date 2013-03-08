@@ -151,6 +151,8 @@ if (typeof jQuery == \'undefined\') {
 }
 </script>
 <script type="text/javascript" src="{$mybb->settings[\'bburl\']}/jscripts/like_system.js"></script>'."\n".'{$stylesheets}');
+	find_replace_templatesets('postbit', "#".preg_quote('{$post[\'attachments\']}')."#i", '{$post[\'simplelikes\']}'."\n".'{$post[\'attachments\']}');
+	find_replace_templatesets('postbit_classic', "#".preg_quote('{$post[\'attachments\']}')."#i", '{$post[\'simplelikes\']}'."\n".'{$post[\'attachments\']}');
 }
 
 function simplelikes_deactivate()
@@ -162,6 +164,8 @@ if (typeof jQuery == \'undefined\') {
 }
 </script>
 <script type="text/javascript" src="{$mybb->settings[\'bburl\']}/jscripts/like_system.js"></script>'."\n")."#i", '');
+	find_replace_templatesets('postbit', "#".preg_quote('{$post[\'simplelikes\']}'."\n")."#i", '');
+	find_replace_templatesets('postbit_classic', "#".preg_quote('{$post[\'simplelikes\']}'."\n")."#i", '');
 }
 
 $plugins->add_hook('postbit', 'simplelikesPostbit');
