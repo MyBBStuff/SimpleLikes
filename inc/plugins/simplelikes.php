@@ -164,12 +164,27 @@ if (typeof jQuery == \'undefined\') {
 <script type="text/javascript" src="{$mybb->settings[\'bburl\']}/jscripts/like_system.js"></script>'."\n")."#i", '');
 }
 
-global $settings;
-
-if ($settings['simplelikes']['enabled']) {
-	$plugins->add_hook('postbit', 'simplelikesPostbit');
-}
+$plugins->add_hook('postbit', 'simplelikesPostbit');
 function simplelikesPostbit(&$post)
 {
+	global $mybb, $db, $pids;
 
+	require_once SIMPLELIKES_PLUGIN_PATH.'Likes.php';
+	try {
+		$likeSystem = new Likes($mybb, $db);
+	} catch (InvalidArgumentException $e) {
+		die($e);
+	}
+
+	if (is_string($pids)) {
+		static $postLikes = null;
+		if (!is_array($postLikes)) {
+			$postLikes = array();
+			$postLikes = $likeSystem->getLikes($pids);
+		}
+	} else {
+		$postLikes[(int) $post['pid']] = $likeSystem->getLikes((int) $post['pid']);
+	}
+
+	var_dump($postLikes);
 }
