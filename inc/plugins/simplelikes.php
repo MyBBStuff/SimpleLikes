@@ -168,7 +168,11 @@ if (typeof jQuery == \'undefined\') {
 	find_replace_templatesets('postbit_classic', "#".preg_quote('{$post[\'simplelikes\']}'."\n")."#i", '');
 }
 
-$plugins->add_hook('postbit', 'simplelikesPostbit');
+global $settings;
+
+if ($settings['simplelikes_enabled']) {
+	$plugins->add_hook('postbit', 'simplelikesPostbit');
+}
 function simplelikesPostbit(&$post)
 {
 	global $mybb, $db, $templates, $pids, $postLikeBar;
@@ -177,7 +181,7 @@ function simplelikesPostbit(&$post)
 	try {
 		$likeSystem = new Likes($mybb, $db);
 	} catch (InvalidArgumentException $e) {
-		die($e);
+		die($e->getMessage());
 	}
 
 	if (is_string($pids)) {
@@ -222,5 +226,33 @@ function simplelikesPostbit(&$post)
 			$likeString .= ' like this post';
 			eval("\$post['simplelikes'] = \"".$templates->get('simplelikes_likebar')."\";");
 		}
+	}
+}
+
+
+if ($settings['simplelikes_enabled']) {
+	$plugins->add_hook('xmlhttp', 'simplelikesAjax', -1);
+}
+function simplelikesAjax()
+{
+	global $mybb, $db, $lang;
+
+	if ($mybb->input['action'] == 'like_post') {
+		if (!verify_post_check($mybb->input['my_post_key'], true)) {
+			xmlhttp_error($lang->invalid_post_code);
+		}
+
+		if (!isset($mybb->input['post_id'])) {
+			xmlhttp_error('No post ID provided.');
+		}
+
+		require_once SIMPLELIKES_PLUGIN_PATH.'Likes.php';
+		try {
+			$likeSystem = new Likes($mybb, $db);
+		} catch (InvalidArgumentException $e) {
+			xmlhttp_error($e->getMessage());
+		}
+
+		$likeSystem->likePost((int) $mybb->input['post_id']);
 	}
 }
