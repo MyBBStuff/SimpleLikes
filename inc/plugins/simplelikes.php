@@ -167,7 +167,7 @@ if (typeof jQuery == \'undefined\') {
 $plugins->add_hook('postbit', 'simplelikesPostbit');
 function simplelikesPostbit(&$post)
 {
-	global $mybb, $db, $pids;
+	global $mybb, $db, $templates, $pids, $postLikeBar;
 
 	require_once SIMPLELIKES_PLUGIN_PATH.'Likes.php';
 	try {
@@ -186,5 +186,37 @@ function simplelikesPostbit(&$post)
 		$postLikes[(int) $post['pid']] = $likeSystem->getLikes((int) $post['pid']);
 	}
 
-	var_dump($postLikes);
+	$post['simplelikes'] = '';
+
+	if (!empty($postLikes[$post['pid']])) {
+		$likeString = '';
+		$goTo = (int) $mybb->settings['simplelikes_num_users'];
+
+		if (array_key_exists($mybb->user['uid'], $postLikes[(int) $post['pid']])) {
+			$likeString .= 'You';
+			unset($postLikes[(int) $post['pid']][(int) $mybb->user['uid']]);
+			if (!empty($postLikes[(int) $post['pid']])) {
+				$likeString .= ', ';
+			}
+			$goTo--;
+		}
+
+		if (!empty($postLikes[$post['pid']])) {
+			for ($i=0; $i < $goTo; $i++) {
+				$random     = $postLikes[$post['pid']][array_rand($postLikes[(int) $post['pid']])];
+				$likeString .= build_profile_link($random['username'], $random['user_id']);
+
+				if ($i < $goTo - 1) {
+					$likeString .= ', ';
+				}
+
+				unset($postLikes[(int) $post['pid']][$random['user_id']]);
+			}
+		}
+
+		if ($likeString != '') {
+			$likeString .= ' like this post';
+			eval("\$post['simplelikes'] = \"".$templates->get('simplelikes_likebar')."\";");
+		}
+	}
 }

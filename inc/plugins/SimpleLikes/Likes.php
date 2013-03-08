@@ -85,7 +85,7 @@ class Likes
 			$queryString = "SELECT l.*, u.username, u.avatar, u.usergroup, u.displaygroup FROM %spost_likes l LEFT JOIN %susers u ON (l.user_id = u.uid) WHERE {$inClause}";
 			$query = $this->db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
 			while ($like = $this->db->fetch_array($query)) {
-				$likes[(int) $like['post_id']][] = $like;
+				$likes[(int) $like['post_id']][(int) $like['user_id']] = $like;
 			}
 		} else {
 			$pid = (int) $pid;
@@ -93,7 +93,7 @@ class Likes
 			$queryString = "SELECT l.*, u.username, u.avatar, u.usergroup, u.displaygroup FROM %spost_likes l LEFT JOIN %susers u ON (l.user_id = u.uid) WHERE l.post_id = {$pid}";
 			$query = $this->db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
 			while ($like = $this->db->fetch_array($query)) {
-				$likes[] = $like;
+				$likes[(int) $like['user_id']] = $like;
 			}
 		}
 
