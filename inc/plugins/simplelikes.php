@@ -157,7 +157,7 @@ if (typeof jQuery == \'undefined\') {
 
 function simplelikes_deactivate()
 {
-	require_once MYBB_ROOT."/inc/adminfunctions_templates.php";
+	require_once MYBB_ROOT.'/inc/adminfunctions_templates.php';
 	find_replace_templatesets('headerinclude', "#".preg_quote('<script type="text/javascript">
 if (typeof jQuery == \'undefined\') {
 	document.write(unescape("%3Cscript src=\'//cdnjs.cloudflare.com/ajax/libs/jquery/1.9.1/jquery.min.js\' type=\'text/javascript\'%3E%3C/script%3E"));
@@ -197,31 +197,8 @@ function simplelikesPostbit(&$post)
 	$post['simplelikes'] = '';
 
 	if (!empty($postLikes[$post['pid']])) {
-		$goTo = (int) $mybb->settings['simplelikes_num_users'];
-		$likeArray = array();
-
-		if (array_key_exists($mybb->user['uid'], $postLikes[(int) $post['pid']])) {
-			$likeArray[] = 'You';
-			unset($postLikes[(int) $post['pid']][(int) $mybb->user['uid']]);
-			$goTo--;
-		}
-
-		if (!empty($postLikes[$post['pid']])) {
-			for ($i=0; $i < $goTo; $i++) {
-				$random      = $postLikes[$post['pid']][array_rand($postLikes[(int) $post['pid']])];
-				$likeArray[] = build_profile_link($random['username'], $random['user_id']);
-				unset($postLikes[(int) $post['pid']][$random['user_id']]);
-			}
-		}
-
-		if (!empty($likeArray)) {
-			$likeString = implode(', ', $likeArray);
-			if (!empty($postLikes[(int) $post['pid']])) {
-				$likeString .= ' and <a href="'.$mybb->settings['bburl'].'/misc.php?action=post_likes&amp;post_id='.$post['pid'].'">'.(int) count($postLikes[(int) $post['pid']]).' others</a>';
-			}
-			$likeString .= ' like this post.';
-			eval("\$post['simplelikes'] = \"".$templates->get('simplelikes_likebar')."\";");
-		}
+		$likeString = $likeSystem->formatLikes($postLikes, $post);
+		eval("\$post['simplelikes'] = \"".$templates->get('simplelikes_likebar')."\";");
 	}
 
 	eval("\$post['button_like'] = \"".$templates->get('simplelikes_likebutton')."\";");
@@ -233,7 +210,7 @@ if ($settings['simplelikes_enabled']) {
 }
 function simplelikesAjax()
 {
-	global $mybb, $db, $lang;
+	global $mybb, $db, $lang, $templates;
 
 	if ($mybb->input['action'] == 'like_post') {
 		if (!verify_post_check($mybb->input['my_post_key'], true)) {
@@ -251,9 +228,21 @@ function simplelikesAjax()
 			xmlhttp_error($e->getMessage());
 		}
 
+		$pid = (int) $mybb->input['post_id'];
+		$post = get_post($pid);
+
 		if ($likeSystem->likePost((int) $mybb->input['post_id'])) {
+			if(isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
 			header('Content-type: application/json');
-			echo json_encode(array('Thanks for liking this post.'));
+				$postLikes = array();
+				$postLikes[$pid] = $likeSystem->getLikes($pid);
+				$likeString = '';
+				$likeString = $likeSystem->formatLikes($postLikes, $post);
+				eval("\$templateString = \"".$templates->get('simplelikes_likebar')."\";");
+				echo json_encode(array('message' => 'Thanks for liking this post.', 'likeString' => $likeString, 'templateString' => $templateString));
+			} else {
+				redirect(get_post_link($pid), 'Thanks for liking a post. We\'re taking you back to it now.', 'Thanks for liking!');
+			}
 		}
 	}
 }

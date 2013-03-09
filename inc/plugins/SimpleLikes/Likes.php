@@ -99,4 +99,46 @@ class Likes
 
 		return $likes;
 	}
+
+	/**
+	 * Format likes into a string for output in the psotbit.
+	 *
+	 * @param array $postLikes An array of likes for posts.
+	 * @param array $post The originator post's array.
+	 * @return string The formatted likes.
+	 */
+	public function formatLikes($postLikes, $post)
+	{
+		$goTo       = (int) $this->mybb->settings['simplelikes_num_users'];
+		$likeArray  = array();
+		$likeString = '';
+
+		if ($goTo == 0) {
+			return '';
+		}
+
+		if (array_key_exists($this->mybb->user['uid'], $postLikes[(int) $post['pid']])) {
+			$likeArray[] = 'You';
+			unset($postLikes[(int) $post['pid']][(int) $this->mybb->user['uid']]);
+			$goTo--;
+		}
+
+		if (!empty($postLikes[$post['pid']])) {
+			for ($i=0; $i < $goTo; $i++) {
+				$random      = $postLikes[$post['pid']][array_rand($postLikes[(int) $post['pid']])];
+				$likeArray[] = build_profile_link($random['username'], $random['user_id']);
+				unset($postLikes[(int) $post['pid']][$random['user_id']]);
+			}
+		}
+
+		if (!empty($likeArray)) {
+			$likeString = implode(', ', $likeArray);
+			if (!empty($postLikes[(int) $post['pid']])) {
+				$likeString .= ' and <a href="'.$this->mybb->settings['bburl'].'/misc.php?action=post_likes&amp;post_id='.$post['pid'].'">'.(int) count($postLikes[(int) $post['pid']]).' others</a>';
+			}
+			$likeString .= ' like this post.';
+		}
+
+		return $likeString;
+	}
 }
