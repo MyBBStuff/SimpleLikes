@@ -56,6 +56,8 @@ function simplelikes_install()
 			) ENGINE=InnoDB{$collation};"
 		);
 	}
+
+	$db->insert_query('alert_settings', array('code' => 'simplelikes'));
 }
 
 function simplelikes_is_installed()
@@ -79,6 +81,8 @@ function simplelikes_uninstall()
 	if ($db->table_exists('post_likes')) {
 		$db->drop_table('post_likes');
 	}
+
+	$db->delete_query('alert_settings', "code = 'simplelikes'");
 
 	$PL->settings_delete('postlikes', true);
 	$PL->templates_delete('postlikes');
@@ -127,6 +131,20 @@ function simplelikes_activate()
 		)
 	);
 
+	$query = $db->simple_select('settinggroups', 'gid', "name = 'myalerts'", array('limit' => '1'));
+	$gid = (int) $db->fetch_field($query, 'gid');
+	$insertArray = array(
+		'name'        => 'myalerts_alert_simplelikes',
+		'title'       => 'Alert on post like?',
+		'description' => 'Alert users when their posts are liked?',
+		'optionscode' => 'yesno',
+		'value'       => 1,
+		'disporder'   => 5,
+		'gid'         => $gid,
+	);
+	$db->insert_query('settings', $insertArray);
+	rebuild_settings();
+
 	// Templating, like a BAWS - http://www.euantor.com/185-templates-in-mybb-plugins
 	$dir = new DirectoryIterator(dirname(__FILE__).'/SimpleLikes/templates');
 	$templates = array();
@@ -157,6 +175,11 @@ if (typeof jQuery == \'undefined\') {
 
 function simplelikes_deactivate()
 {
+	global $db;
+
+	$db->delete_query('settings', "name = 'myalerts_alert_simplelikes'");
+	rebuild_settings();
+
 	require_once MYBB_ROOT.'/inc/adminfunctions_templates.php';
 	find_replace_templatesets('headerinclude', "#".preg_quote('<script type="text/javascript">
 if (typeof jQuery == \'undefined\') {
@@ -204,9 +227,8 @@ function simplelikesPostbit(&$post)
 	eval("\$post['button_like'] = \"".$templates->get('simplelikes_likebutton')."\";");
 }
 
-
 if ($settings['simplelikes_enabled']) {
-	$plugins->add_hook('xmlhttp', 'simplelikesAjax', -1);
+	$plugins->add_hook('xmlhttp', 'simplelikesAjax');
 }
 function simplelikesAjax()
 {
@@ -232,7 +254,7 @@ function simplelikesAjax()
 		$post = get_post($pid);
 
 		if ($likeSystem->likePost((int) $mybb->input['post_id'])) {
-			if(isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+			if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) AND strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
 			header('Content-type: application/json');
 				$postLikes = array();
 				$postLikes[$pid] = $likeSystem->getLikes($pid);
