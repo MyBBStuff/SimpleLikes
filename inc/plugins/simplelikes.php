@@ -197,36 +197,34 @@ function simplelikesPostbit(&$post)
 	$post['simplelikes'] = '';
 
 	if (!empty($postLikes[$post['pid']])) {
-		$likeString = '';
 		$goTo = (int) $mybb->settings['simplelikes_num_users'];
+		$likeArray = array();
 
 		if (array_key_exists($mybb->user['uid'], $postLikes[(int) $post['pid']])) {
-			$likeString .= 'You';
+			$likeArray[] = 'You';
 			unset($postLikes[(int) $post['pid']][(int) $mybb->user['uid']]);
-			if (!empty($postLikes[(int) $post['pid']])) {
-				$likeString .= ', ';
-			}
 			$goTo--;
 		}
 
 		if (!empty($postLikes[$post['pid']])) {
 			for ($i=0; $i < $goTo; $i++) {
-				$random     = $postLikes[$post['pid']][array_rand($postLikes[(int) $post['pid']])];
-				$likeString .= build_profile_link($random['username'], $random['user_id']);
-
-				if ($i < $goTo - 1) {
-					$likeString .= ', ';
-				}
-
+				$random      = $postLikes[$post['pid']][array_rand($postLikes[(int) $post['pid']])];
+				$likeArray[] = build_profile_link($random['username'], $random['user_id']);
 				unset($postLikes[(int) $post['pid']][$random['user_id']]);
 			}
 		}
 
-		if ($likeString != '') {
-			$likeString .= ' like this post';
+		if (!empty($likeArray)) {
+			$likeString = implode(', ', $likeArray);
+			if (!empty($postLikes[(int) $post['pid']])) {
+				$likeString .= ' and <a href="'.$mybb->settings['bburl'].'/misc.php?action=post_likes&amp;post_id='.$post['pid'].'">'.(int) count($postLikes[(int) $post['pid']]).' others</a>';
+			}
+			$likeString .= ' like this post.';
 			eval("\$post['simplelikes'] = \"".$templates->get('simplelikes_likebar')."\";");
 		}
 	}
+
+	eval("\$post['button_like'] = \"".$templates->get('simplelikes_likebutton')."\";");
 }
 
 
@@ -253,6 +251,9 @@ function simplelikesAjax()
 			xmlhttp_error($e->getMessage());
 		}
 
-		$likeSystem->likePost((int) $mybb->input['post_id']);
+		if ($likeSystem->likePost((int) $mybb->input['post_id'])) {
+			header('Content-type: application/json');
+			echo json_encode(array('Thanks for liking this post.'));
+		}
 	}
 }
