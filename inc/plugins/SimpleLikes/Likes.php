@@ -127,7 +127,7 @@ class Likes
 		if (!empty($postLikes[$post['pid']])) {
 			for ($i=0; $i < $goTo; $i++) {
 				$random      = $postLikes[$post['pid']][array_rand($postLikes[(int) $post['pid']])];
-				$likeArray[] = build_profile_link($random['username'], $random['user_id']);
+				$likeArray[] = build_profile_link(htmlspecialchars_uni($random['username']), $random['user_id']);
 				unset($postLikes[(int) $post['pid']][$random['user_id']]);
 			}
 		}

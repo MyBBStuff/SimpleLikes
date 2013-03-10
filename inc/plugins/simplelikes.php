@@ -299,6 +299,49 @@ function simplelikesAlertOutput(&$alert)
 }
 
 if ($settings['simplelikes_enabled']) {
+	$plugins->add_hook('misc_start', 'simplelikesMisc');
+}
+function simplelikesMisc()
+{
+	global $mybb;
+
+	if ($mybb->input['action'] == 'post_likes') {
+		global $db, $templates, $theme, $post, $likes, $headerinclude;
+
+		if (!isset($mybb->input['post_id'])) {
+			error('No post ID set. Did you access this function correctly?');
+		}
+
+		$pid = (int) $mybb->input['post_id'];
+		$post = get_post($pid);
+
+		require_once SIMPLELIKES_PLUGIN_PATH.'Likes.php';
+		try {
+			$likeSystem = new Likes($mybb, $db);
+		} catch (InvalidArgumentException $e) {
+			xmlhttp_error($e->getMessage());
+		}
+
+		$likeArray = $likeSystem->getLikes($pid);
+
+		if (empty($likeArray)) {
+			error('Nobody has liked this post yet. Why not be the first to do so?');
+		}
+
+		$likes = '';
+		foreach ($likeArray as $like) {
+			$like['username']     = htmlspecialchars_uni($like['username']);
+			$like['avatar']       = htmlspecialchars_uni($like['avatar']);
+			$like['profile_link'] = build_profile_link(format_name(htmlspecialchars_uni($like['username']), $like['usergroup'], $like['displaygroup']), $like['user_id']);
+			eval("\$likes .= \"".$templates->get('simplelikes_likes_popup_liker')."\";");
+		}
+
+		eval("\$page = \"".$templates->get('simplelikes_likes_popup')."\";");
+		output_page($page);
+	}
+}
+
+if ($settings['simplelikes_enabled']) {
 	$plugins->add_hook('xmlhttp', 'simplelikesAjax');
 }
 function simplelikesAjax()
