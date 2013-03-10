@@ -135,7 +135,7 @@ class Likes
 		if (!empty($likeArray)) {
 			$likeString = implode(', ', $likeArray);
 			if (!empty($postLikes[(int) $post['pid']])) {
-				$likeString .= ' and <a href="'.$this->mybb->settings['bburl'].'/misc.php?action=post_likes&amp;post_id='.$post['pid'].'">'.(int) count($postLikes[(int) $post['pid']]).' others</a>';
+				$likeString .= ' and <a href="#" onclick="MyBB.popupWindow(\''.$this->mybb->settings['bburl'].'/misc.php?action=post_likes&amp;post_id='.$post['pid'].'\', \'buddyList\', 350, 350);">'.(int) count($postLikes[(int) $post['pid']]).' others</a>';
 			}
 			$likeString .= ' like this post.';
 		}
