@@ -58,6 +58,13 @@ function simplelikes_install()
 	}
 
 	$db->insert_query('alert_settings', array('code' => 'simplelikes'));
+
+	if (!$db->field_exists('simplelikes_can_like', 'usergroups')) {
+        $db->add_column('usergroups', 'simplelikes_can_like', "INT(1) NOT NULL DEFAULT '0'");
+    }
+
+    $db->write_query('UPDATE '.TABLE_PREFIX.'usergroups SET `simplelikes_can_like` = 1 WHERE gid IN (2, 3, 4, 6);');
+    $cache->update_usergroups();
 }
 
 function simplelikes_is_installed()
@@ -69,7 +76,7 @@ function simplelikes_is_installed()
 
 function simplelikes_uninstall()
 {
-	global $db, $lang, $PL;
+	global $db, $lang, $PL, $cache;
 
 	if (!file_exists(PLUGINLIBRARY)) {
 		flash_message('This plugin required PluginLibrary, please ensure it is installed correctly.', 'error');
@@ -86,6 +93,12 @@ function simplelikes_uninstall()
 
 	$PL->settings_delete('postlikes', true);
 	$PL->templates_delete('postlikes');
+
+	if ($db->field_exists('simplelikes_can_like', 'usergroups')) {
+        $db->drop_column('usergroups', 'simplelikes_can_like');
+    }
+
+    $cache->update_usergroups();
 }
 
 function simplelikes_activate()
@@ -196,6 +209,32 @@ if (typeof jQuery == \'undefined\') {
 	find_replace_templatesets('postbit_classic', "#".preg_quote('{$post[\'simplelikes\']}'."\n")."#i", '');
 }
 
+$plugins->add_hook('admin_user_groups_edit_graph_tabs', 'simplelikes_usergroup_perms_tab');
+function simplelikes_usergroup_perms_tab(&$tabs)
+{
+    $tabs['simplelikes'] = 'Like System';
+}
+
+$plugins->add_hook('admin_user_groups_edit_graph', 'simplelikes_usergroup_perms');
+function simplelikes_usergroup_perms()
+{
+    global $form, $mybb;
+
+    echo '<div id="tab_simplelikes">';
+    $form_container = new FormContainer('Like System');
+    $form_container->output_row('Can like posts?', "", $form->generate_yes_no_radio('simplelikes_can_like', $mybb->input['simplelikes_can_like'], true), 'simplelikes_can_like');
+    $form_container->end();
+    echo '</div>';
+}
+
+$plugins->add_hook('admin_user_groups_edit_commit', 'simplelikes_usergroup_perms_save');
+function simplelikes_usergroup_perms_save()
+{
+    global $updated_group, $mybb;
+
+    $updated_group['simplelikes_can_like'] = (int) $mybb->input['simplelikes_can_like'];
+}
+
 global $settings;
 
 if ($settings['simplelikes_enabled']) {
@@ -229,7 +268,10 @@ function simplelikesPostbit(&$post)
 		eval("\$post['simplelikes'] = \"".$templates->get('simplelikes_likebar')."\";");
 	}
 
-	eval("\$post['button_like'] = \"".$templates->get('simplelikes_likebutton')."\";");
+	$post['button_like'] = '';
+	if ($mybb->usergroup['simplelikes_can_like']) {
+		eval("\$post['button_like'] = \"".$templates->get('simplelikes_likebutton')."\";");
+	}
 }
 
 if ($settings['simplelikes_enabled']) {
@@ -281,6 +323,16 @@ function simplelikesAjax()
 				echo json_encode(array('error' => 'You cannot like your own post.'));
 			} else {
 				error('You cannot like your own post.');
+			}
+			die();
+		}
+
+		if (!$mybb->usergroup['simplelikes_can_like']) {
+			if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) AND strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+				header('Content-type: application/json');
+				echo json_encode(array('error' => 'Your usergroup is not allowed to like posts.'));
+			} else {
+				error('Your usergroup is not allowed to like posts.');
 			}
 			die();
 		}
