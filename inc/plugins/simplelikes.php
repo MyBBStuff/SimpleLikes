@@ -128,6 +128,11 @@ function simplelikes_activate()
 				'value'         =>  '3',
 				'optionscode'   =>  'text',
 				),
+			'can_like_own'   =>  array(
+				'title'         =>  'Let users like own posts?',
+				'description'   =>  'Set whether users can "like" their own posts.',
+				'value'         =>  '0',
+				),
 		)
 	);
 
@@ -246,7 +251,7 @@ function simplelikesAlertOutput(&$alert)
 	global $mybb, $lang;
 
 	if ($alert['alert_type'] == 'simplelikes' AND $mybb->settings['myalerts_alert_simplelikes']) {
-        $alert['message'] = $lang->sprintf('{1} liked <a href="{2}">your post</a>. ({3})', $alert['user'], get_post_link((int) $alert['content']['pid'], (int) $alert['tid']).'#pid'.(int) $alert['content']['pid'], $alert['dateline']);
+        $alert['message'] = $lang->sprintf('{1} liked <a href="{2}">your post</a>. Others may have liked this post since. ({3})', $alert['user'], get_post_link((int) $alert['content']['pid'], (int) $alert['tid']).'#pid'.(int) $alert['content']['pid'], $alert['dateline']);
         $alert['rowType'] = 'simplelikesAlert';
     }
 }
@@ -267,6 +272,19 @@ function simplelikesAjax()
 			xmlhttp_error('No post ID provided.');
 		}
 
+		$pid = (int) $mybb->input['post_id'];
+		$post = get_post($pid);
+
+		if (!$mybb->settings['simplelikes_can_like_own'] AND $post['uid'] == $mybb->user['uid']) {
+			if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) AND strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+				header('Content-type: application/json');
+				echo json_encode(array('error' => 'You cannot like your own post.'));
+			} else {
+				error('You cannot like your own post.');
+			}
+			die();
+		}
+
 		require_once SIMPLELIKES_PLUGIN_PATH.'Likes.php';
 		try {
 			$likeSystem = new Likes($mybb, $db);
@@ -274,26 +292,34 @@ function simplelikesAjax()
 			xmlhttp_error($e->getMessage());
 		}
 
-		$pid = (int) $mybb->input['post_id'];
-		$post = get_post($pid);
-
-		if ($likeSystem->likePost((int) $mybb->input['post_id'])) {
+		if ($result = $likeSystem->likePost((int) $mybb->input['post_id'])) {
 			if ($mybb->settings['myalerts_alert_simplelikes']) {
 				global $Alerts;
+
 				if (isset($Alerts) AND $Alerts instanceof Alerts AND $mybb->settings['myalerts_enabled']) {
-					$queryString = "SELECT s.*, v.*, u.uid FROM %salert_settings s LEFT JOIN %salert_setting_values v ON (v.setting_id = s.id) LEFT JOIN %susers u ON (v.user_id = u.uid) WHERE u.uid = ". (int) $post['uid'] ." AND s.code = 'simplelikes' LIMIT 1";
-					$query = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX, TABLE_PREFIX));
+					if ($result == 'like deleted') {
+						$query = $db->simple_select('alerts', 'id', "alert_type = 'simplelikes' AND tid = {$pid} AND uid = ".(int) $mybb->user['uid']);
+						$alertId = $db->fetch_field($query, 'id');
+						$Alerts->deleteAlerts($alertId);
+					} else {
+						$query = $db->simple_select('alerts', 'id', "alert_type = 'simplelikes' AND tid = {$pid} AND uid = ".(int) $mybb->user['uid']);
+						if ($db->num_rows($query) == 0) {
+							unset($query);
+							$queryString = "SELECT s.*, v.*, u.uid FROM %salert_settings s LEFT JOIN %salert_setting_values v ON (v.setting_id = s.id) LEFT JOIN %susers u ON (v.user_id = u.uid) WHERE u.uid = ". (int) $post['uid'] ." AND s.code = 'simplelikes' LIMIT 1";
+							$query = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX, TABLE_PREFIX));
 
-					$userSetting = $db->fetch_array($query);
+							$userSetting = $db->fetch_array($query);
 
-					if ((int) $userSetting['value'] == 1) {
-						$Alerts->addAlert($post['uid'], 'simplelikes', $post['tid'], $mybb->user['uid'], array('pid' => $pid));
+							if ((int) $userSetting['value'] == 1) {
+								$Alerts->addAlert($post['uid'], 'simplelikes', $pid, $mybb->user['uid'], array('tid' => $post['tid']));
+							}
+						}
 					}
 				}
 			}
 
 			if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) AND strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-			header('Content-type: application/json');
+				header('Content-type: application/json');
 				$postLikes = array();
 				$postLikes[$pid] = $likeSystem->getLikes($pid);
 				$likeString = '';

@@ -10,15 +10,18 @@ jQuery(document).ready(function($) {
 			'xmlhttp.php?action=like_post',
 			{my_post_key: my_post_key, post_id: post_id}
 		).done(function(data) {
-			console.log(data);
-			if ($('#post_likes_' + post_id).length != 0 && data.likeString != 0) {
-				$('#post_likes_' + post_id).html(data.likeString);
-			} else if ($('#post_likes_' + post_id).length != 0) {
-				$('#post_likes_' + post_id).fadeOut('slow', function() {
-					$(this).remove();
-				});
+			if (data.error) {
+				alert(data.error);
 			} else {
-				$('#pid_' + post_id).after(data.templateString);
+				if ($('#post_likes_' + post_id).length != 0 && data.likeString != 0) {
+					$('#post_likes_' + post_id).html(data.likeString);
+				} else if ($('#post_likes_' + post_id).length != 0) {
+					$('#post_likes_' + post_id).fadeOut('slow', function() {
+						$(this).remove();
+					});
+				} else {
+					$('#pid_' + post_id).after(data.templateString);
+				}
 			}
 		});
 	});

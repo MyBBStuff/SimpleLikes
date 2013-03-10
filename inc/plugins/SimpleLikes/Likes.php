@@ -50,7 +50,7 @@ class Likes
 	 * Add or remove a like for a specific post. Likes act as if toggled.
 	 *
 	 * @param int $pid The post id to (un)like.
-	 * @return int|resource The insert id or the query data.
+	 * @return int|string The insert id or a string "like deleted".
 	 */
 	public function likePost($pid)
 	{
@@ -59,7 +59,8 @@ class Likes
 
 		$query = $this->db->simple_select('post_likes', '*', "post_id = {$pid} AND user_id = {$uid}", array('limit' => 1));
 		if ($this->db->num_rows($query) > 0) {
-			return $this->db->delete_query('post_likes', "post_id = {$pid} AND user_id = {$uid}", 1);
+			$this->db->delete_query('post_likes', "post_id = {$pid} AND user_id = {$uid}", 1);
+			return 'like deleted';
 		} else {
 			$insertArray = [
 				'post_id' => $pid,
