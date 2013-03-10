@@ -25,6 +25,7 @@ function simplelikes_info()
 	return array(
 		'name'          =>  'Like System',
 		'description'   =>  'A simple post like system.',
+		'website'       => 'http://www.mybbstuff.com',
 		'author'        =>  'euantor',
 		'authorsite'    =>  'http://www.euantor.com',
 		'version'       =>  '1.0',
@@ -60,11 +61,16 @@ function simplelikes_install()
 	$db->insert_query('alert_settings', array('code' => 'simplelikes'));
 
 	if (!$db->field_exists('simplelikes_can_like', 'usergroups')) {
-        $db->add_column('usergroups', 'simplelikes_can_like', "INT(1) NOT NULL DEFAULT '0'");
-    }
+		$db->add_column('usergroups', 'simplelikes_can_like', "INT(1) NOT NULL DEFAULT '0'");
+	}
 
-    $db->write_query('UPDATE '.TABLE_PREFIX.'usergroups SET `simplelikes_can_like` = 1 WHERE gid IN (2, 3, 4, 6);');
-    $cache->update_usergroups();
+	if (!$db->field_exists('simplelikes_can_view_likes', 'usergroups')) {
+		$db->add_column('usergroups', 'simplelikes_can_view_likes', "INT(1) NOT NULL DEFAULT '0'");
+	}
+
+	$db->write_query('UPDATE '.TABLE_PREFIX.'usergroups SET `simplelikes_can_like` = 1 WHERE gid IN (2, 3, 4, 6);');
+	$db->write_query('UPDATE '.TABLE_PREFIX.'usergroups SET `simplelikes_can_view_likes` = 1 WHERE gid IN (2, 3, 4, 6);');
+	$cache->update_usergroups();
 }
 
 function simplelikes_is_installed()
@@ -95,10 +101,14 @@ function simplelikes_uninstall()
 	$PL->templates_delete('postlikes');
 
 	if ($db->field_exists('simplelikes_can_like', 'usergroups')) {
-        $db->drop_column('usergroups', 'simplelikes_can_like');
-    }
+		$db->drop_column('usergroups', 'simplelikes_can_like');
+	}
 
-    $cache->update_usergroups();
+	if ($db->field_exists('simplelikes_can_view_likes', 'usergroups')) {
+		$db->drop_column('usergroups', 'simplelikes_can_view_likes');
+	}
+
+	$cache->update_usergroups();
 }
 
 function simplelikes_activate()
@@ -212,27 +222,29 @@ if (typeof jQuery == \'undefined\') {
 $plugins->add_hook('admin_user_groups_edit_graph_tabs', 'simplelikes_usergroup_perms_tab');
 function simplelikes_usergroup_perms_tab(&$tabs)
 {
-    $tabs['simplelikes'] = 'Like System';
+	$tabs['simplelikes'] = 'Like System';
 }
 
 $plugins->add_hook('admin_user_groups_edit_graph', 'simplelikes_usergroup_perms');
 function simplelikes_usergroup_perms()
 {
-    global $form, $mybb;
+	global $form, $mybb;
 
-    echo '<div id="tab_simplelikes">';
-    $form_container = new FormContainer('Like System');
-    $form_container->output_row('Can like posts?', "", $form->generate_yes_no_radio('simplelikes_can_like', $mybb->input['simplelikes_can_like'], true), 'simplelikes_can_like');
-    $form_container->end();
-    echo '</div>';
+	echo '<div id="tab_simplelikes">';
+	$form_container = new FormContainer('Like System');
+	$form_container->output_row('Can like posts?', "", $form->generate_yes_no_radio('simplelikes_can_like', $mybb->input['simplelikes_can_like'], true), 'simplelikes_can_like');
+	$form_container->output_row('Can view post likers?', "", $form->generate_yes_no_radio('simplelikes_can_view_likes', $mybb->input['simplelikes_can_view_likes'], true), 'simplelikes_can_view_likes');
+	$form_container->end();
+	echo '</div>';
 }
 
 $plugins->add_hook('admin_user_groups_edit_commit', 'simplelikes_usergroup_perms_save');
 function simplelikes_usergroup_perms_save()
 {
-    global $updated_group, $mybb;
+	global $updated_group, $mybb;
 
-    $updated_group['simplelikes_can_like'] = (int) $mybb->input['simplelikes_can_like'];
+	$updated_group['simplelikes_can_like'] = (int) $mybb->input['simplelikes_can_like'];
+	$updated_group['simplelikes_can_view_likes'] = (int) $mybb->input['simplelikes_can_view_likes'];
 }
 
 global $settings;
@@ -293,9 +305,9 @@ function simplelikesAlertOutput(&$alert)
 	global $mybb, $lang;
 
 	if ($alert['alert_type'] == 'simplelikes' AND $mybb->settings['myalerts_alert_simplelikes']) {
-        $alert['message'] = $lang->sprintf('{1} liked <a href="{2}">your post</a>. Others may have liked this post since. ({3})', $alert['user'], get_post_link((int) $alert['content']['pid'], (int) $alert['tid']).'#pid'.(int) $alert['content']['pid'], $alert['dateline']);
-        $alert['rowType'] = 'simplelikesAlert';
-    }
+		$alert['message'] = $lang->sprintf('{1} liked <a href="{2}">your post</a>. Others may have liked this post since. ({3})', $alert['user'], get_post_link((int) $alert['content']['pid'], (int) $alert['tid']).'#pid'.(int) $alert['content']['pid'], $alert['dateline']);
+		$alert['rowType'] = 'simplelikesAlert';
+	}
 }
 
 if ($settings['simplelikes_enabled']) {
@@ -306,6 +318,10 @@ function simplelikesMisc()
 	global $mybb;
 
 	if ($mybb->input['action'] == 'post_likes') {
+		if (!$mybb->usergroup['simplelikes_can_view_likes']) {
+			error_no_permission();
+		}
+
 		global $db, $templates, $theme, $post, $likes, $headerinclude;
 
 		if (!isset($mybb->input['post_id'])) {
