@@ -228,6 +228,30 @@ function simplelikesPostbit(&$post)
 }
 
 if ($settings['simplelikes_enabled']) {
+	$plugins->add_hook('myalerts_load_lang', 'simplelikesAlertSettings');
+}
+function simplelikesAlertSettings()
+{
+	global $lang, $baseSettings;
+
+	$baseSettings[] = 'simplelikes';
+	$lang->myalerts_setting_simplelikes = 'Alert on post like?';
+}
+
+if ($settings['simplelikes_enabled']) {
+	$plugins->add_hook('myalerts_alerts_output_start', 'simplelikesAlertOutput');
+}
+function simplelikesAlertOutput(&$alert)
+{
+	global $mybb, $lang;
+
+	if ($alert['alert_type'] == 'simplelikes' AND $mybb->settings['myalerts_alert_simplelikes']) {
+        $alert['message'] = $lang->sprintf('{1} liked <a href="{2}">your post</a>. ({3})', $alert['user'], get_post_link((int) $alert['content']['pid'], (int) $alert['tid']).'#pid'.(int) $alert['content']['pid'], $alert['dateline']);
+        $alert['rowType'] = 'simplelikesAlert';
+    }
+}
+
+if ($settings['simplelikes_enabled']) {
 	$plugins->add_hook('xmlhttp', 'simplelikesAjax');
 }
 function simplelikesAjax()
@@ -254,6 +278,20 @@ function simplelikesAjax()
 		$post = get_post($pid);
 
 		if ($likeSystem->likePost((int) $mybb->input['post_id'])) {
+			if ($mybb->settings['myalerts_alert_simplelikes']) {
+				global $Alerts;
+				if (isset($Alerts) AND $Alerts instanceof Alerts AND $mybb->settings['myalerts_enabled']) {
+					$queryString = "SELECT s.*, v.*, u.uid FROM %salert_settings s LEFT JOIN %salert_setting_values v ON (v.setting_id = s.id) LEFT JOIN %susers u ON (v.user_id = u.uid) WHERE u.uid = ". (int) $post['uid'] ." AND s.code = 'simplelikes' LIMIT 1";
+					$query = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX, TABLE_PREFIX));
+
+					$userSetting = $db->fetch_array($query);
+
+					if ((int) $userSetting['value'] == 1) {
+						$Alerts->addAlert($post['uid'], 'simplelikes', $post['tid'], $mybb->user['uid'], array('pid' => $pid));
+					}
+				}
+			}
+
 			if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) AND strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
 			header('Content-type: application/json');
 				$postLikes = array();
