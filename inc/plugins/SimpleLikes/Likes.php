@@ -124,20 +124,27 @@ class Likes
 			$goTo--;
 		}
 
-		if (!empty($postLikes[$post['pid']])) {
+		if ($goTo > 0) {
 			for ($i=0; $i < $goTo; $i++) {
-				$random      = $postLikes[$post['pid']][array_rand($postLikes[(int) $post['pid']])];
-				$likeArray[] = build_profile_link(htmlspecialchars_uni($random['username']), $random['user_id']);
-				unset($postLikes[(int) $post['pid']][$random['user_id']]);
+				if (!empty($postLikes[(int) $post['pid']])) {
+					$random      = $postLikes[$post['pid']][array_rand($postLikes[(int) $post['pid']])];
+					$likeArray[] = build_profile_link(htmlspecialchars_uni($random['username']), $random['user_id']);
+					unset($postLikes[(int) $post['pid']][$random['user_id']]);
+				}
 			}
 		}
 
 		if (!empty($likeArray)) {
+			if (count($likeArray) == 1 AND $likeArray[0] != 'You') {
+				$likePhrase = 'likes';
+			} else {
+				$likePhrase = 'like';
+			}
 			$likeString = implode(', ', $likeArray);
 			if (!empty($postLikes[(int) $post['pid']])) {
 				$likeString .= ' and <a href="#" onclick="MyBB.popupWindow(\''.$this->mybb->settings['bburl'].'/misc.php?action=post_likes&amp;post_id='.$post['pid'].'\', \'buddyList\', 350, 350);">'.(int) count($postLikes[(int) $post['pid']]).' others</a>';
 			}
-			$likeString .= ' like this post.';
+			$likeString .= ' '.$likePhrase.' this post.';
 		}
 
 		return $likeString;
