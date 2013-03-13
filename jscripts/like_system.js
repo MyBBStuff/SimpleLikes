@@ -5,6 +5,7 @@ jQuery(document).ready(function($) {
 		event.preventDefault();
 		var post_id = $(this).attr('id');
 		post_id = post_id.substr(16);
+		var btn = $(this);
 
 		$.post(
 			'xmlhttp.php?action=like_post',
@@ -22,6 +23,8 @@ jQuery(document).ready(function($) {
 				} else {
 					$('#pid_' + post_id).after(data.templateString);
 				}
+
+				btn.text(data.buttonString);
 			}
 		});
 	});

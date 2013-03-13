@@ -407,6 +407,8 @@ function simplelikesAjax()
 			if ($mybb->settings['myalerts_alert_simplelikes']) {
 				global $Alerts;
 
+				$buttonText = 'Like';
+
 				if (isset($Alerts) AND $Alerts instanceof Alerts AND $mybb->settings['myalerts_enabled']) {
 					if ($result == 'like deleted') {
 						$query = $db->simple_select('alerts', 'id', "alert_type = 'simplelikes' AND tid = {$pid} AND uid = ".(int) $mybb->user['uid']);
@@ -424,6 +426,7 @@ function simplelikesAjax()
 							if ((int) $userSetting['value'] == 1) {
 								$Alerts->addAlert($post['uid'], 'simplelikes', $pid, $mybb->user['uid'], array('tid' => $post['tid']));
 							}
+							$buttonText = 'UnLike';
 						}
 					}
 				}
@@ -436,7 +439,7 @@ function simplelikesAjax()
 				$likeString = '';
 				$likeString = $likeSystem->formatLikes($postLikes, $post);
 				eval("\$templateString = \"".$templates->get('simplelikes_likebar')."\";");
-				echo json_encode(array('message' => 'Thanks for liking this post.', 'likeString' => $likeString, 'templateString' => $templateString));
+				echo json_encode(array('message' => 'Thanks for liking this post.', 'likeString' => $likeString, 'templateString' => $templateString, 'buttonString' => $buttonText));
 			} else {
 				redirect(get_post_link($pid), 'Thanks for liking a post. We\'re taking you back to it now.', 'Thanks for liking!');
 			}
