@@ -305,7 +305,7 @@ function simplelikesAlertOutput(&$alert)
 	global $mybb, $lang;
 
 	if ($alert['alert_type'] == 'simplelikes' AND $mybb->settings['myalerts_alert_simplelikes']) {
-		$alert['message'] = $lang->sprintf('{1} liked <a href="{2}">your post</a>. Others may have liked this post since. ({3})', $alert['user'], get_post_link((int) $alert['content']['pid'], (int) $alert['tid']).'#pid'.(int) $alert['content']['pid'], $alert['dateline']);
+		$alert['message'] = $lang->sprintf('{1} liked <a href="{2}">your post</a>. Others may have liked this post since. ({3})', $alert['user'], get_post_link((int) $alert['tid'], (int) $alert['content']['tid']).'#pid'.(int) $alert['tid'], $alert['dateline']);
 		$alert['rowType'] = 'simplelikesAlert';
 	}
 }
