@@ -124,12 +124,16 @@ class Likes
 		$likeArray  = array();
 		$likeString = '';
 
+		if (!$this->lang->simplelikes) {
+			$this->lang->load('simplelikes');
+		}
+
 		if ($goTo == 0) {
 			return '';
 		}
 
 		if (array_key_exists($this->mybb->user['uid'], $postLikes[(int) $post['pid']])) {
-			$likeArray[] = 'You';
+			$likeArray[] = $this->lang->simplelikes_you;
 			unset($postLikes[(int) $post['pid']][(int) $this->mybb->user['uid']]);
 			$goTo--;
 		}
@@ -146,15 +150,15 @@ class Likes
 
 		if (!empty($likeArray)) {
 			if (count($likeArray) == 1 AND $likeArray[0] != 'You') {
-				$likePhrase = 'likes';
+				$likePhrase = $this->lang->simplelikes_like_plural;
 			} else {
-				$likePhrase = 'like';
+				$likePhrase = $this->lang->simplelikes_like_singular;
 			}
 			$likeString = implode(', ', $likeArray);
 			if (!empty($postLikes[(int) $post['pid']])) {
-				$likeString .= ' and <a href="#" onclick="MyBB.popupWindow(\''.$this->mybb->settings['bburl'].'/misc.php?action=post_likes&amp;post_id='.$post['pid'].'\', \'buddyList\', 350, 350);">'.(int) count($postLikes[(int) $post['pid']]).' others</a>';
+				$likeString .= ' and <a href="#" onclick="MyBB.popupWindow(\''.$this->mybb->settings['bburl'].'/misc.php?action=post_likes&amp;post_id='.$post['pid'].'\', \'buddyList\', 350, 350);">'.(int) count($postLikes[(int) $post['pid']]).' '.$this->lang->simplelikes_others.'</a>';
 			}
-			$likeString .= ' '.$likePhrase.' this post.';
+			$likeString .= ' '.$likePhrase.' '.$this->lang->simplelikes_this_post;
 		}
 
 		return $likeString;

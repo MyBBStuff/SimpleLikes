@@ -386,6 +386,10 @@ function simplelikesAjax()
 			xmlhttp_error($lang->invalid_post_code);
 		}
 
+		if (!$lang->simplelikes) {
+			$lang->load('simplelikes');
+		}
+
 		if (!isset($mybb->input['post_id'])) {
 			xmlhttp_error('No post ID provided.');
 		}
@@ -424,7 +428,7 @@ function simplelikesAjax()
 			if ($mybb->settings['myalerts_alert_simplelikes']) {
 				global $Alerts;
 
-				$buttonText = 'Like';
+				$buttonText = $lang->simplelikes_like;
 
 				if (isset($Alerts) AND $Alerts instanceof Alerts AND $mybb->settings['myalerts_enabled']) {
 					if ($result == 'like deleted') {
@@ -443,7 +447,7 @@ function simplelikesAjax()
 							if ((int) $userSetting['value'] == 1) {
 								$Alerts->addAlert($post['uid'], 'simplelikes', $pid, $mybb->user['uid'], array('tid' => $post['tid']));
 							}
-							$buttonText = 'UnLike';
+							$buttonText = $lang->simplelikes_unlike;
 						}
 					}
 				}
