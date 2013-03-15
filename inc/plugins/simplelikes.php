@@ -264,11 +264,11 @@ if ($settings['simplelikes_enabled']) {
 }
 function simplelikesPostbit(&$post)
 {
-	global $mybb, $db, $templates, $pids, $postLikeBar;
+	global $mybb, $db, $templates, $pids, $postLikeBar, $lang;
 
 	require_once SIMPLELIKES_PLUGIN_PATH.'Likes.php';
 	try {
-		$likeSystem = new Likes($mybb, $db);
+		$likeSystem = new Likes($mybb, $db, $lang);
 	} catch (InvalidArgumentException $e) {
 		die($e->getMessage());
 	}
@@ -301,10 +301,14 @@ if ($settings['simplelikes_enabled']) {
 }
 function simplelikesAlertSettings()
 {
-	global $lang, $baseSettings;
+	global $lang, $baseSettings, $lang;
+
+	if (!$lang->simplelikes) {
+		$lang->load('simplelikes');
+	}
 
 	$baseSettings[] = 'simplelikes';
-	$lang->myalerts_setting_simplelikes = 'Alert on post like?';
+	$lang->myalerts_setting_simplelikes = $lang->simplelikes_alert_setting;
 }
 
 if ($settings['simplelikes_enabled']) {
@@ -314,9 +318,12 @@ function simplelikesAlertOutput(&$alert)
 {
 	global $mybb, $lang;
 
+	if (!$lang->simplelikes) {
+		$lang->load('simplelikes');
+	}
+
 	if ($alert['alert_type'] == 'simplelikes' AND $mybb->settings['myalerts_alert_simplelikes']) {
-		$alert['message'] = $lang->sprintf('{1} liked <a href="{2}">your post</a>. Others may have liked this post since. ({3})', $alert['user'], get_post_link((int) $alert['tid'], (int) $alert['content']['tid']).'#pid'.(int) $alert['tid'], $alert['dateline']);
-		$alert['rowType'] = 'simplelikesAlert';
+		$alert['message'] = $lang->sprintf($lang->simplelikes_alert, $alert['user'], get_post_link((int) $alert['tid'], (int) $alert['content']['tid']).'#pid'.(int) $alert['tid'], $alert['dateline']);
 	}
 }
 
@@ -332,7 +339,7 @@ function simplelikesMisc()
 			error_no_permission();
 		}
 
-		global $db, $templates, $theme, $post, $likes, $headerinclude;
+		global $db, $templates, $theme, $post, $likes, $headerinclude, $lang;
 
 		if (!isset($mybb->input['post_id'])) {
 			error('No post ID set. Did you access this function correctly?');
@@ -343,7 +350,7 @@ function simplelikesMisc()
 
 		require_once SIMPLELIKES_PLUGIN_PATH.'Likes.php';
 		try {
-			$likeSystem = new Likes($mybb, $db);
+			$likeSystem = new Likes($mybb, $db, $lang);
 		} catch (InvalidArgumentException $e) {
 			xmlhttp_error($e->getMessage());
 		}
@@ -408,7 +415,7 @@ function simplelikesAjax()
 
 		require_once SIMPLELIKES_PLUGIN_PATH.'Likes.php';
 		try {
-			$likeSystem = new Likes($mybb, $db);
+			$likeSystem = new Likes($mybb, $db, $lang);
 		} catch (InvalidArgumentException $e) {
 			xmlhttp_error($e->getMessage());
 		}

@@ -29,13 +29,21 @@ class Likes
 	private $mybb;
 
 	/**
+	 * Our Language object from MyBB.
+	 *
+	 * @access private
+	 * @var MyLanguage
+	 */
+	private $lang;
+
+	/**
 	 * Create a new Likes object.
 	 *
 	 * @param MyBB $mybbIn The MyBB object.
 	 * @param DB_* $dbIn A Database instance object of type DB_MySQL, DB_MySQLi, DB_PgSQL or DB_SQLite.
 	 * @return null
 	 */
-	public function __construct(MyBB $mybbIn, $dbIn)
+	public function __construct(MyBB $mybbIn, $dbIn, MyLanguage $langIn)
 	{
 		$this->mybb = $mybbIn;
 
@@ -44,6 +52,8 @@ class Likes
 		} else {
 			throw new InvalidArgumentException('Expected object of class DB_MySQL|DB_MySQLi|DB_PgSQL|DB_SQLite, but found '.get_class($dbIn));
 		}
+
+		$this->lang = $langIn;
 	}
 
 	/**
