@@ -156,7 +156,8 @@ function simplelikes_activate()
 				'description'   =>  'Set whether users can "like" their own posts.',
 				'value'         =>  '0',
 				),
-		)
+		),
+		false
 	);
 
 	$query = $db->simple_select('settinggroups', 'gid', "name = 'myalerts'", array('limit' => '1'));
@@ -222,18 +223,27 @@ if (typeof jQuery == \'undefined\') {
 $plugins->add_hook('admin_user_groups_edit_graph_tabs', 'simplelikes_usergroup_perms_tab');
 function simplelikes_usergroup_perms_tab(&$tabs)
 {
-	$tabs['simplelikes'] = 'Like System';
+	global $lang;
+	if (!$lang->simplelikes) {
+		$lang->load('simplelikes');
+	}
+
+	$tabs['simplelikes'] = $lang->simplelikes;
 }
 
 $plugins->add_hook('admin_user_groups_edit_graph', 'simplelikes_usergroup_perms');
 function simplelikes_usergroup_perms()
 {
-	global $form, $mybb;
+	global $form, $mybb, $lang;
+
+	if (!$lang->simplelikes) {
+		$lang->load('simplelikes');
+	}
 
 	echo '<div id="tab_simplelikes">';
 	$form_container = new FormContainer('Like System');
-	$form_container->output_row('Can like posts?', "", $form->generate_yes_no_radio('simplelikes_can_like', $mybb->input['simplelikes_can_like'], true), 'simplelikes_can_like');
-	$form_container->output_row('Can view post likers?', "", $form->generate_yes_no_radio('simplelikes_can_view_likes', $mybb->input['simplelikes_can_view_likes'], true), 'simplelikes_can_view_likes');
+	$form_container->output_row($lang->simplelikes_perms_can_like, "", $form->generate_yes_no_radio('simplelikes_can_like', $mybb->input['simplelikes_can_like'], true), 'simplelikes_can_like');
+	$form_container->output_row($lang->simplelikes_perms_can_view_likes, "", $form->generate_yes_no_radio('simplelikes_can_view_likes', $mybb->input['simplelikes_can_view_likes'], true), 'simplelikes_can_view_likes');
 	$form_container->end();
 	echo '</div>';
 }

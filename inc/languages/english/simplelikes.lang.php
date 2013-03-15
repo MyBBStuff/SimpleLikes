@@ -1,0 +1,3 @@
+<?php
+
+$l['simplelikes'] = 'SimpleLikes';
