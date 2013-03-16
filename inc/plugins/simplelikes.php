@@ -85,7 +85,7 @@ function simplelikes_uninstall()
 	global $db, $lang, $PL, $cache;
 
 	if (!file_exists(PLUGINLIBRARY)) {
-		flash_message('This plugin required PluginLibrary, please ensure it is installed correctly.', 'error');
+		flash_message('This plugin requires PluginLibrary, please ensure it is installed correctly.', 'error');
 		admin_redirect('index.php?module=config-plugins');
 	}
 
@@ -109,6 +109,9 @@ function simplelikes_uninstall()
 	}
 
 	$cache->update_usergroups();
+
+	$db->delete_query('alerts', "alert_type = 'simplelikes'");
+	$db->delete_query('alert_settings', "code = 'simplelikes'");
 }
 
 function simplelikes_activate()
@@ -198,8 +201,14 @@ if (typeof jQuery == \'undefined\') {
 }
 </script>
 <script type="text/javascript" src="{$mybb->settings[\'bburl\']}/jscripts/like_system.js"></script>'."\n".'{$stylesheets}');
+
+	// Like bar
 	find_replace_templatesets('postbit', "#".preg_quote('{$post[\'attachments\']}')."#i", '{$post[\'simplelikes\']}'."\n".'{$post[\'attachments\']}');
 	find_replace_templatesets('postbit_classic', "#".preg_quote('{$post[\'attachments\']}')."#i", '{$post[\'simplelikes\']}'."\n".'{$post[\'attachments\']}');
+
+	// Like button
+	find_replace_templatesets('postbit', "#".preg_quote('{$post[\'button_edit\']}')."#i", '{$post[\'button_like\']}{$post[\'button_edit\']}');
+	find_replace_templatesets('postbit_classic', "#".preg_quote('{$post[\'button_edit\']}')."#i", '{$post[\'button_like\']}{$post[\'button_edit\']}');
 }
 
 function simplelikes_deactivate()
@@ -215,9 +224,15 @@ if (typeof jQuery == \'undefined\') {
 	document.write(unescape("%3Cscript src=\'//cdnjs.cloudflare.com/ajax/libs/jquery/1.9.1/jquery.min.js\' type=\'text/javascript\'%3E%3C/script%3E"));
 }
 </script>
-<script type="text/javascript" src="{$mybb->settings[\'bburl\']}/jscripts/like_system.js"></script>'."\n")."#i", '');
-	find_replace_templatesets('postbit', "#".preg_quote('{$post[\'simplelikes\']}'."\n")."#i", '');
-	find_replace_templatesets('postbit_classic', "#".preg_quote('{$post[\'simplelikes\']}'."\n")."#i", '');
+<script type="text/javascript" src="{$mybb->settings[\'bburl\']}/jscripts/like_system.js"></script>'."\n")."#im", '');
+
+	// Like bar
+	find_replace_templatesets('postbit', "#".preg_quote('{$post[\'simplelikes\']}')."#im", '');
+	find_replace_templatesets('postbit_classic', "#".preg_quote('{$post[\'simplelikes\']}')."#im", '');
+
+	// Like button
+	find_replace_templatesets('postbit', "#".preg_quote('{$post[\'button_like\']}')."#i", '');
+	find_replace_templatesets('postbit_classic', "#".preg_quote('{$post[\'button_like\']}')."#i", '');
 }
 
 $plugins->add_hook('admin_user_groups_edit_graph_tabs', 'simplelikes_usergroup_perms_tab');
@@ -253,7 +268,7 @@ function simplelikes_usergroup_perms_save()
 {
 	global $updated_group, $mybb;
 
-	$updated_group['simplelikes_can_like'] = (int) $mybb->input['simplelikes_can_like'];
+	$updated_group['simplelikes_can_like']       = (int) $mybb->input['simplelikes_can_like'];
 	$updated_group['simplelikes_can_view_likes'] = (int) $mybb->input['simplelikes_can_view_likes'];
 }
 
@@ -294,6 +309,33 @@ function simplelikesPostbit(&$post)
 	if ($mybb->usergroup['simplelikes_can_like']) {
 		eval("\$post['button_like'] = \"".$templates->get('simplelikes_likebutton')."\";");
 	}
+}
+
+if ($settings['simplelikes_enabled']) {
+	$plugins->add_hook('member_profile_end', 'simplelikesProfile');
+}
+function simplelikesProfile()
+{
+	global $mybb, $db, $lang, $memprofile, $templates, $postsLiked, $likesReceived;
+
+	if (!$lang->simplelikes) {
+		$lang->load('simplelikes');
+	}
+
+	$uid = (int) $memprofile['uid'];
+
+	// Number of likes user has made
+	$query      = $db->simple_select('post_likes', 'COUNT(id) AS count', 'user_id = '.$uid);
+	$usersLikes = (int) $db->fetch_field($query, 'count');
+	eval("\$postsLiked = \"".$templates->get('simplelikes_profile_total_likes')."\";");
+	unset($query);
+
+	// Number of likes user's posts have
+	$queryString = "SELECT COUNT(l.id) AS count FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.uid = {$uid}";
+	$query = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
+	$postLikes = (int) $db->fetch_field($query, 'count');
+	eval("\$likesReceived = \"".$templates->get('simplelikes_profile_likes_received')."\";");
+	unset($query);
 }
 
 if ($settings['simplelikes_enabled']) {
@@ -341,11 +383,15 @@ function simplelikesMisc()
 
 		global $db, $templates, $theme, $post, $likes, $headerinclude, $lang;
 
-		if (!isset($mybb->input['post_id'])) {
-			error('No post ID set. Did you access this function correctly?');
+		if (!$lang->simplelikes) {
+			$lang->load('simplelikes');
 		}
 
-		$pid = (int) $mybb->input['post_id'];
+		if (!isset($mybb->input['post_id'])) {
+			error($lang->simplelikes_error_post_id);
+		}
+
+		$pid  = (int) $mybb->input['post_id'];
 		$post = get_post($pid);
 
 		require_once SIMPLELIKES_PLUGIN_PATH.'Likes.php';
@@ -358,7 +404,7 @@ function simplelikesMisc()
 		$likeArray = $likeSystem->getLikes($pid);
 
 		if (empty($likeArray)) {
-			error('Nobody has liked this post yet. Why not be the first to do so?');
+			error($lang->simplelikes_error_no_likes);
 		}
 
 		$likes = '';
@@ -391,7 +437,7 @@ function simplelikesAjax()
 		}
 
 		if (!isset($mybb->input['post_id'])) {
-			xmlhttp_error('No post ID provided.');
+			xmlhttp_error($lang->simplelikes_error_post_id);
 		}
 
 		$pid = (int) $mybb->input['post_id'];
@@ -400,9 +446,9 @@ function simplelikesAjax()
 		if (!$mybb->settings['simplelikes_can_like_own'] AND $post['uid'] == $mybb->user['uid']) {
 			if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) AND strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
 				header('Content-type: application/json');
-				echo json_encode(array('error' => 'You cannot like your own post.'));
+				echo json_encode(array('error' => $lang->simplelikes_error_own_post));
 			} else {
-				error('You cannot like your own post.');
+				xmlhttp_error($lang->simplelikes_error_own_post);
 			}
 			die();
 		}
@@ -410,9 +456,9 @@ function simplelikesAjax()
 		if (!$mybb->usergroup['simplelikes_can_like']) {
 			if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) AND strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
 				header('Content-type: application/json');
-				echo json_encode(array('error' => 'Your usergroup is not allowed to like posts.'));
+				echo json_encode(array('error' => $lang->simplelikes_error_perms));
 			} else {
-				error('Your usergroup is not allowed to like posts.');
+				xmlhttp_error($lang->simplelikes_error_perms);
 			}
 			die();
 		}
@@ -460,9 +506,9 @@ function simplelikesAjax()
 				$likeString = '';
 				$likeString = $likeSystem->formatLikes($postLikes, $post);
 				eval("\$templateString = \"".$templates->get('simplelikes_likebar')."\";");
-				echo json_encode(array('message' => 'Thanks for liking this post.', 'likeString' => $likeString, 'templateString' => $templateString, 'buttonString' => $buttonText));
+				echo json_encode(array('likeString' => $likeString, 'templateString' => $templateString, 'buttonString' => $buttonText));
 			} else {
-				redirect(get_post_link($pid), 'Thanks for liking a post. We\'re taking you back to it now.', 'Thanks for liking!');
+				redirect(get_post_link($pid), $lang->simplelikes_thanks, $lang->simplelikes_thanks_title);
 			}
 		}
 	}
