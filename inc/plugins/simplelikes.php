@@ -209,6 +209,9 @@ if (typeof jQuery == \'undefined\') {
 	// Like button
 	find_replace_templatesets('postbit', "#".preg_quote('{$post[\'button_edit\']}')."#i", '{$post[\'button_like\']}{$post[\'button_edit\']}');
 	find_replace_templatesets('postbit_classic', "#".preg_quote('{$post[\'button_edit\']}')."#i", '{$post[\'button_like\']}{$post[\'button_edit\']}');
+
+	// Profile
+	find_replace_templatesets('member_profile', "#".preg_quote('{$referrals}')."#i", '{$postsLiked}'."\n".'{$likesReceived}'."\n".'{$referrals}');
 }
 
 function simplelikes_deactivate()
@@ -227,12 +230,15 @@ if (typeof jQuery == \'undefined\') {
 <script type="text/javascript" src="{$mybb->settings[\'bburl\']}/jscripts/like_system.js"></script>'."\n")."#im", '');
 
 	// Like bar
-	find_replace_templatesets('postbit', "#".preg_quote('{$post[\'simplelikes\']}')."#im", '');
-	find_replace_templatesets('postbit_classic', "#".preg_quote('{$post[\'simplelikes\']}')."#im", '');
+	find_replace_templatesets('postbit', "#".preg_quote('{$post[\'simplelikes\']}')."#i", '');
+	find_replace_templatesets('postbit_classic', "#".preg_quote('{$post[\'simplelikes\']}')."#i", '');
 
 	// Like button
 	find_replace_templatesets('postbit', "#".preg_quote('{$post[\'button_like\']}')."#i", '');
 	find_replace_templatesets('postbit_classic', "#".preg_quote('{$post[\'button_like\']}')."#i", '');
+
+	// Profile
+	find_replace_templatesets('member_profile', "#".preg_quote('{$postsLiked}'."\n".'{$likesReceived}')."#i", '');
 }
 
 $plugins->add_hook('admin_user_groups_edit_graph_tabs', 'simplelikes_usergroup_perms_tab');
