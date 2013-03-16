@@ -392,6 +392,10 @@ function simplelikesGlobal()
 		$templatelist .= 'multipage_page_current,multipage_page,multipage_nextpage,multipage,simplelikes_likes_by_user_row,simplelikes_likes_by_user';
 	}
 
+	if (THIS_SCRIPT == 'misc.php' AND $mybb->input['action'] == 'post_likes_received_by_user') {
+		$templatelist .= 'multipage_page_current,multipage_page,multipage_nextpage,multipage,simplelikes_likes_received_by_user_row,simplelikes_likes_by_user';
+	}
+
 	if (THIS_SCRIPT == 'misc.php' AND $mybb->input['action'] == 'post_likes') {
 		$templatelist .= 'simplelikes_likes_popup_liker,simplelikes_likes_popup';
 	}
@@ -529,7 +533,7 @@ function simplelikesMisc()
 		$user_id = (int) $mybb->input['user_id'];
 		$user    = get_user($user_id);
 
-		$queryString = "SELECT COUNT(*) AS count FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.uid = {$user_id}";
+		$queryString = "SELECT COUNT(*) AS count FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.uid = {$user_id} GROUP BY p.pid";
 		$query = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
 		$count = (int) $db->fetch_field($query, 'count');
 		unset($query);
@@ -559,13 +563,14 @@ function simplelikesMisc()
 		add_breadcrumb($lang->simplelikes_likes_by_user, "misc.php?action=post_likes_by_user&user_id={$user_id}");
 
 		$likes = '';
-		$queryString = "SELECT * FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE l.user_id = {$user_id} ORDER BY l.id DESC LIMIT {$start}, 20";
+		$queryString = "SELECT *, COUNT(id) AS count FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.uid = {$user_id} GROUP BY p.pid ORDER BY l.id DESC LIMIT {$start}, 20";
 		$query = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
 		while ($like = $db->fetch_array($query)) {
 			$altbg            = alt_trow();
 			$like['postlink'] = get_post_link((int) $like['post_id']).'#pid'.(int) $like['post_id'];
 			$like['subject']  = htmlspecialchars_uni($like['subject']);
-			eval("\$likes .= \"".$templates->get('simplelikes_likes_by_user_row')."\";");
+			$like['count']    = (int) $like['count'];
+			eval("\$likes .= \"".$templates->get('simplelikes_likes_received_by_user_row')."\";");
 		}
 
 		eval("\$page = \"".$templates->get('simplelikes_likes_by_user')."\";");
