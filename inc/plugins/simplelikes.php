@@ -376,6 +376,36 @@ function simplelikesAlertOutput(&$alert)
 }
 
 if ($settings['simplelikes_enabled']) {
+	$plugins->add_hook('global_start', 'simplelikesGlobal');
+}
+function simplelikesGlobal()
+{
+	global $templatelist, $mybb;
+
+	if (!$templatelist) {
+		$templatelist = '';
+	}
+
+	$templatelist .= ',';
+
+	if (THIS_SCRIPT == 'misc.php' AND $mybb->input['action'] == 'post_likes_by_user') {
+		$templatelist .= 'multipage_page_current,multipage_page,multipage_nextpage,multipage,simplelikes_likes_by_user_row,simplelikes_likes_by_user';
+	}
+
+	if (THIS_SCRIPT == 'misc.php' AND $mybb->input['action'] == 'post_likes') {
+		$templatelist .= 'simplelikes_likes_popup_liker,simplelikes_likes_popup';
+	}
+
+	if (THIS_SCRIPT == 'member.php' AND $mybb->input['action'] == 'profile') {
+		$templatelist .= 'simplelikes_profile_total_likes,simplelikes_profile_likes_received';
+	}
+
+	if (THIS_SCRIPT == 'showthread.php') {
+		$templatelist .= 'simplelikes_likebutton,simplelikes_likebar';
+	}
+}
+
+if ($settings['simplelikes_enabled']) {
 	$plugins->add_hook('misc_start', 'simplelikesMisc');
 }
 function simplelikesMisc()
@@ -387,7 +417,7 @@ function simplelikesMisc()
 			error_no_permission();
 		}
 
-		global $db, $templates, $theme, $post, $likes, $headerinclude, $lang;
+		global $db, $templates, $theme, $headerinclude, $lang;
 
 		if (!$lang->simplelikes) {
 			$lang->load('simplelikes');
@@ -422,6 +452,123 @@ function simplelikesMisc()
 		}
 
 		eval("\$page = \"".$templates->get('simplelikes_likes_popup')."\";");
+		output_page($page);
+	} else if ($mybb->input['action'] == 'post_likes_by_user') {
+		if (!$mybb->usergroup['simplelikes_can_view_likes']) {
+			error_no_permission();
+		}
+
+		global $db, $templates, $lang;
+		global $headerinclude, $header, $footer, $theme;
+
+		if (!$lang->simplelikes) {
+			$lang->load('simplelikes');
+		}
+
+		if (!isset($mybb->input['user_id']) OR (int) $mybb->input['user_id'] == 0) {
+			error($lang->simplelikes_error_user_id);
+		}
+
+		$user_id = (int) $mybb->input['user_id'];
+		$user    = get_user($user_id);
+
+		$count = (int) $db->fetch_field($db->simple_select('post_likes', 'COUNT(id) AS count', "user_id = {$user_id}"), 'count');
+
+		$page  = (int) $mybb->input['page'];
+		$pages = $count / 20;
+		$pages = ceil($pages);
+		if ($mybb->input['page'] == "last") {
+			$page = $pages;
+		}
+
+		if ($page > $pages OR $page <= 0) {
+			$page = 1;
+		}
+
+		if ($page AND $page > 0)
+		{
+			$start = ($page - 1) * $perpage;
+		} else {
+			$start = 0;
+			$page = 1;
+		}
+		$multipage = multipage($count, 20, $page, "misc.php?action=post_likes_by_user&user_id={$user_id}");
+
+		$lang->simplelikes_likes_by_user = $lang->sprintf($lang->simplelikes_likes_by_user, htmlspecialchars_uni($user['username']));
+
+		add_breadcrumb($lang->simplelikes_likes_by_user, "misc.php?action=post_likes_by_user&user_id={$user_id}");
+
+		$likes = '';
+		$queryString = "SELECT * FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE l.user_id = {$user_id} ORDER BY l.id DESC LIMIT {$start}, 20";
+		$query = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
+		while ($like = $db->fetch_array($query)) {
+			$altbg            = alt_trow();
+			$like['postlink'] = get_post_link((int) $like['post_id']).'#pid'.(int) $like['post_id'];
+			$like['subject']  = htmlspecialchars_uni($like['subject']);
+			eval("\$likes .= \"".$templates->get('simplelikes_likes_by_user_row')."\";");
+		}
+
+		eval("\$page = \"".$templates->get('simplelikes_likes_by_user')."\";");
+		output_page($page);
+	} else if ($mybb->input['action'] == 'post_likes_received_by_user') {
+		if (!$mybb->usergroup['simplelikes_can_view_likes']) {
+			error_no_permission();
+		}
+
+		global $db, $templates, $lang;
+		global $headerinclude, $header, $footer, $theme;
+
+		if (!$lang->simplelikes) {
+			$lang->load('simplelikes');
+		}
+
+		if (!isset($mybb->input['user_id']) OR (int) $mybb->input['user_id'] == 0) {
+			error($lang->simplelikes_error_user_id);
+		}
+
+		$user_id = (int) $mybb->input['user_id'];
+		$user    = get_user($user_id);
+
+		$queryString = "SELECT COUNT(*) AS count FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.uid = {$user_id}";
+		$query = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
+		$count = (int) $db->fetch_field($query, 'count');
+		unset($query);
+
+		$page  = (int) $mybb->input['page'];
+		$pages = $count / 20;
+		$pages = ceil($pages);
+		if ($mybb->input['page'] == "last") {
+			$page = $pages;
+		}
+
+		if ($page > $pages OR $page <= 0) {
+			$page = 1;
+		}
+
+		if ($page AND $page > 0)
+		{
+			$start = ($page - 1) * $perpage;
+		} else {
+			$start = 0;
+			$page = 1;
+		}
+		$multipage = multipage($count, 20, $page, "misc.php?action=post_likes_received_by_user&user_id={$user_id}");
+
+		$lang->simplelikes_likes_by_user = $lang->sprintf($lang->simplelikes_likes_received_by_user, htmlspecialchars_uni($user['username']));
+
+		add_breadcrumb($lang->simplelikes_likes_by_user, "misc.php?action=post_likes_by_user&user_id={$user_id}");
+
+		$likes = '';
+		$queryString = "SELECT * FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE l.user_id = {$user_id} ORDER BY l.id DESC LIMIT {$start}, 20";
+		$query = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
+		while ($like = $db->fetch_array($query)) {
+			$altbg            = alt_trow();
+			$like['postlink'] = get_post_link((int) $like['post_id']).'#pid'.(int) $like['post_id'];
+			$like['subject']  = htmlspecialchars_uni($like['subject']);
+			eval("\$likes .= \"".$templates->get('simplelikes_likes_by_user_row')."\";");
+		}
+
+		eval("\$page = \"".$templates->get('simplelikes_likes_by_user')."\";");
 		output_page($page);
 	}
 }
