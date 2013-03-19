@@ -72,10 +72,10 @@ class Likes
 			$this->db->delete_query('post_likes', "post_id = {$pid} AND user_id = {$uid}", 1);
 			return 'like deleted';
 		} else {
-			$insertArray = [
+			$insertArray = array(
 				'post_id' => $pid,
 				'user_id' => $uid,
-			];
+			);
 
 			return $this->db->insert_query('post_likes', $insertArray);
 		}
