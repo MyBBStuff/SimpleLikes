@@ -7,7 +7,7 @@
  * @package Simple Likes
  * @author  Euan T. <euan@euantor.com>
  * @license http://opensource.org/licenses/mit-license.php MIT license
- * @version 1.0
+ * @version 1.1
  */
 
 if (!defined('IN_MYBB')) {
@@ -28,7 +28,7 @@ function simplelikes_info()
 		'website'       => 'http://www.mybbstuff.com',
 		'author'        =>  'euantor',
 		'authorsite'    =>  'http://www.euantor.com',
-		'version'       =>  '1.0',
+		'version'       =>  '1.1',
 		'guid'          =>  '',
 		'compatibility' =>  '16*',
 	);
@@ -312,7 +312,7 @@ function simplelikesPostbit(&$post)
 	}
 
 	$post['button_like'] = '';
-	if ($mybb->usergroup['simplelikes_can_like']) {
+	if ($mybb->usergroup['simplelikes_can_like'] AND ($mybb->user['uid'] != $post['uid'] AND !$mybb->settings['simplelikes_can_like_own'])) {
 		eval("\$post['button_like'] = \"".$templates->get('simplelikes_likebutton')."\";");
 	}
 }
@@ -666,7 +666,7 @@ function simplelikesAjax()
 				eval("\$templateString = \"".$templates->get('simplelikes_likebar')."\";");
 				echo json_encode(array('likeString' => $likeString, 'templateString' => $templateString, 'buttonString' => $buttonText));
 			} else {
-				redirect(get_post_link($pid), $lang->simplelikes_thanks, $lang->simplelikes_thanks_title);
+				redirect(get_post_link($pid).'#pid'.$pid, $lang->simplelikes_thanks, $lang->simplelikes_thanks_title);
 			}
 		}
 	}

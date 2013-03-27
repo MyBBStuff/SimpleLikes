@@ -1,7 +1,7 @@
 jQuery.noConflict();
 
 jQuery(document).ready(function($) {
-	$('.btn_like').on('click', function(event) {
+	$("a[id^='likeButton_post_'").on('click', function(event) {
 		event.preventDefault();
 		var post_id = $(this).attr('id');
 		post_id = post_id.substr(16);
