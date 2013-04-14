@@ -156,7 +156,7 @@ class Likes
 			}
 			$likeString = implode(', ', $likeArray);
 			if (!empty($postLikes[(int) $post['pid']])) {
-				$likeString .= ' and <a href="#pid'.$post['pid'].'" onclick="MyBB.popupWindow(\''.$this->mybb->settings['bburl'].'/misc.php?action=post_likes&amp;post_id='.$post['pid'].'\', \'buddyList\', 350, 350);">'.(int) count($postLikes[(int) $post['pid']]).' '.$this->lang->simplelikes_others.'</a>';
+				$likeString .= ' and <a href="#pid'.$post['pid'].'" onclick="MyBB.popupWindow(\''.$this->mybb->settings['bburl'].'/misc.php?action=post_likes&amp;post_id='.$post['pid'].'\', \'buddyList\', 350, 350); return false;">'.(int) count($postLikes[(int) $post['pid']]).' '.$this->lang->simplelikes_others.'</a>';
 			}
 			$likeString .= ' '.$likePhrase.' '.$this->lang->simplelikes_this_post;
 		}
