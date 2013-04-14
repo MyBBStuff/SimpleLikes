@@ -287,6 +287,10 @@ function simplelikesPostbit(&$post)
 {
 	global $mybb, $db, $templates, $pids, $postLikeBar, $lang;
 
+	if (!$lang->simplelikes) {
+		$lang->load('simplelikes');
+	}
+
 	require_once SIMPLELIKES_PLUGIN_PATH.'Likes.php';
 	try {
 		$likeSystem = new Likes($mybb, $db, $lang);
@@ -313,6 +317,11 @@ function simplelikesPostbit(&$post)
 
 	$post['button_like'] = '';
 	if ($mybb->usergroup['simplelikes_can_like'] AND ($mybb->user['uid'] != $post['uid'] AND !$mybb->settings['simplelikes_can_like_own'])) {
+		$buttonText = $lang->simplelikes_like;
+		if (isset($postLikes[(int) $post['pid']][(int) $mybb->user['uid']])) {
+			$buttonText = $lang->simplelikes_unlike;
+		}
+
 		eval("\$post['button_like'] = \"".$templates->get('simplelikes_likebutton')."\";");
 	}
 }
