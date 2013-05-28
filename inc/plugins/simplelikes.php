@@ -7,7 +7,7 @@
  * @package Simple Likes
  * @author  Euan T. <euan@euantor.com>
  * @license http://opensource.org/licenses/mit-license.php MIT license
- * @version 1.1
+ * @version 1.2
  */
 
 if (!defined('IN_MYBB')) {
@@ -23,14 +23,14 @@ if (!defined('PLUGINLIBRARY')) {
 function simplelikes_info()
 {
 	return array(
-		'name'          =>  'Like System',
-		'description'   =>  'A simple post like system.',
+		'name'          => 'Like System',
+		'description'   => 'A simple post like system.',
 		'website'       => 'http://www.mybbstuff.com',
-		'author'        =>  'euantor',
-		'authorsite'    =>  'http://www.euantor.com',
-		'version'       =>  '1.1',
-		'guid'          =>  '',
-		'compatibility' =>  '16*',
+		'author'        => 'euantor',
+		'authorsite'    => 'http://www.euantor.com',
+		'version'       => '1.2',
+		'guid'          => '',
+		'compatibility' => '16*',
 	);
 }
 
@@ -38,11 +38,11 @@ function simplelikes_install()
 {
 	global $db, $cache;
 
-	$plugin_info     = simplelikes_info();
-	$euantor_plugins = $cache->read('euantor_plugins');
+	$plugin_info                    = simplelikes_info();
+	$euantor_plugins                = $cache->read('euantor_plugins');
 	$euantor_plugins['simplelikes'] = array(
-		'title'     =>  'SimpleLikes',
-		'version'   =>  $plugin_info['version'],
+		'title'   => 'SimpleLikes',
+		'version' => $plugin_info['version'],
 	);
 	$cache->update('euantor_plugins', $euantor_plugins);
 
@@ -68,8 +68,14 @@ function simplelikes_install()
 		$db->add_column('usergroups', 'simplelikes_can_view_likes', "INT(1) NOT NULL DEFAULT '0'");
 	}
 
-	$db->write_query('UPDATE '.TABLE_PREFIX.'usergroups SET `simplelikes_can_like` = 1 WHERE gid IN (2, 3, 4, 6);');
-	$db->write_query('UPDATE '.TABLE_PREFIX.'usergroups SET `simplelikes_can_view_likes` = 1 WHERE gid IN (2, 3, 4, 6);');
+	$db->update_query(
+		'usergroups',
+		array(
+			'simplelikes_can_like'       => 1,
+			'simplelikes_can_view_likes' => 1,
+		),
+		'gid IN (2,3,4,6)'
+	);
 	$cache->update_usergroups();
 }
 
@@ -95,7 +101,9 @@ function simplelikes_uninstall()
 		$db->drop_table('post_likes');
 	}
 
-	$db->delete_query('alert_settings', "code = 'simplelikes'");
+	if ($db->table_exists('alert_settings')) {
+		$db->delete_query('alert_settings', "code = 'simplelikes'");
+	}
 
 	$PL->settings_delete('postlikes', true);
 	$PL->templates_delete('postlikes');
@@ -130,41 +138,42 @@ function simplelikes_activate()
 		admin_redirect('index.php?module=config-plugins');
 	}
 
-	$plugin_info = simplelikes_info();
-	$this_version = $plugin_info['version'];
-	$euantor_plugins = $cache->read('euantor_plugins');
+	$plugin_info                    = simplelikes_info();
+	$this_version                   = $plugin_info['version'];
+	$euantor_plugins                = $cache->read('euantor_plugins');
 	$euantor_plugins['simplelikes'] = array(
-		'title'     =>  'SimpleLikes',
-		'version'   =>  $plugin_info['version'],
-		);
+		'title'   => 'SimpleLikes',
+		'version' => $plugin_info['version'],
+	);
 	$cache->update('euantor_plugins', $euantor_plugins);
 
-	$PL->settings('simplelikes',
+	$PL->settings(
+		'simplelikes',
 		'Like System Settings',
 		'Settings for the like system.',
 		array(
-			'enabled'   =>  array(
-				'title'         =>  'Enabled?',
-				'description'   =>  'Use this switch to globally enable/disable the like system.',
-				'value'         =>  '1',
-				),
-			'num_users'   =>  array(
-				'title'         =>  'Number of "likers" to show per post',
-				'description'   =>  'Set the number of most recent likers to show in the post like bar.',
-				'value'         =>  '3',
-				'optionscode'   =>  'text',
-				),
-			'can_like_own'   =>  array(
-				'title'         =>  'Let users like own posts?',
-				'description'   =>  'Set whether users can "like" their own posts.',
-				'value'         =>  '0',
-				),
+			'num_users'                  => array(
+				'title'       => 'Number of "likers" to show per post',
+				'description' => 'Set the number of most recent likers to show in the post like bar.',
+				'value'       => '3',
+				'optionscode' => 'text',
+			),
+			'can_like_own'               => array(
+				'title'       => 'Let users like own posts?',
+				'description' => 'Set whether users can "like" their own posts.',
+				'value'       => '0',
+			),
+			'get_num_likes_user_postbit' => array(
+				'title'       => 'Number of likes received in postbit?',
+				'description' => 'Do you wish to get how many likes a user has received in the postbit? Beware that this adds an extra query.',
+				'value'       => '0',
+			),
 		),
 		false
 	);
 
-	$query = $db->simple_select('settinggroups', 'gid', "name = 'myalerts'", array('limit' => '1'));
-	$gid = (int) $db->fetch_field($query, 'gid');
+	$query       = $db->simple_select('settinggroups', 'gid', "name = 'myalerts'", array('limit' => '1'));
+	$gid         = (int) $db->fetch_field($query, 'gid');
 	$insertArray = array(
 		'name'        => 'myalerts_alert_simplelikes',
 		'title'       => 'Alert on post like?',
@@ -178,7 +187,7 @@ function simplelikes_activate()
 	rebuild_settings();
 
 	// Templating, like a BAWS - http://www.euantor.com/185-templates-in-mybb-plugins
-	$dir = new DirectoryIterator(dirname(__FILE__).'/SimpleLikes/templates');
+	$dir       = new DirectoryIterator(dirname(__FILE__).'/SimpleLikes/templates');
 	$templates = array();
 	foreach ($dir as $file) {
 		if (!$file->isDot() AND !$file->isDir() AND pathinfo($file->getFilename(), PATHINFO_EXTENSION) == 'html') {
@@ -191,7 +200,6 @@ function simplelikes_activate()
 		'Like System',
 		$templates
 	);
-
 
 	require_once MYBB_ROOT.'/inc/adminfunctions_templates.php';
 	// Add our JS. We need jQuery and myalerts.js. For jQuery, we check it hasn't already been loaded then load 1.7.2 from google's CDN
@@ -245,6 +253,7 @@ $plugins->add_hook('admin_user_groups_edit_graph_tabs', 'simplelikes_usergroup_p
 function simplelikes_usergroup_perms_tab(&$tabs)
 {
 	global $lang;
+
 	if (!$lang->simplelikes) {
 		$lang->load('simplelikes');
 	}
@@ -278,11 +287,7 @@ function simplelikes_usergroup_perms_save()
 	$updated_group['simplelikes_can_view_likes'] = (int) $mybb->input['simplelikes_can_view_likes'];
 }
 
-global $settings;
-
-if ($settings['simplelikes_enabled']) {
-	$plugins->add_hook('postbit', 'simplelikesPostbit');
-}
+$plugins->add_hook('postbit', 'simplelikesPostbit');
 function simplelikesPostbit(&$post)
 {
 	global $mybb, $db, $templates, $pids, $postLikeBar, $lang;
@@ -316,7 +321,7 @@ function simplelikesPostbit(&$post)
 	}
 
 	$post['button_like'] = '';
-	if ($mybb->usergroup['simplelikes_can_like'] AND ($mybb->user['uid'] != $post['uid'] AND !$mybb->settings['simplelikes_can_like_own'])) {
+	if ($mybb->usergroup['simplelikes_can_like'] AND ($mybb->user['uid'] != $post['uid'] OR $mybb->settings['simplelikes_can_like_own'])) {
 		$buttonText = $lang->simplelikes_like;
 		if (isset($postLikes[(int) $post['pid']][(int) $mybb->user['uid']])) {
 			$buttonText = $lang->simplelikes_unlike;
@@ -324,11 +329,36 @@ function simplelikesPostbit(&$post)
 
 		eval("\$post['button_like'] = \"".$templates->get('simplelikes_likebutton')."\";");
 	}
+
+	// Get number of likes user has received
+	if ($mybb->settings['simplelikes_get_num_likes_user_postbit']) {
+		if (is_string($pids)) {
+			static $postLikesReceived = null;
+			if (!is_array($postLikesReceived)) {
+				$postLikesReceived = array();
+				$queryString       = "SELECT p.uid, COUNT(l.id) AS count FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE {$pids} GROUP BY p.uid";
+				$query             = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
+				while ($row = $db->fetch_array($query)) {
+					$postLikesReceived[(int) $row['uid']] = (int) $row['count'];
+				}
+			}
+		} else {
+			$postLikesReceived                     = array();
+			$pid                                   = (int) $post['pid'];
+			$queryString                           = "SELECT p.uid, COUNT(l.id) AS count FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.pid = {$pid} GROUP BY p.uid";
+			$query                                 = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
+			$postLikesReceived[(int) $post['uid']] = (int) $db->fetch_field($query, 'count');
+		}
+
+		if (array_key_exists((int) $post['uid'], $postLikesReceived)) {
+			$post['likes_received'] = $postLikesReceived[(int) $post['uid']];
+		} else {
+			$post['likes_received'] = 0;
+		}
+	}
 }
 
-if ($settings['simplelikes_enabled']) {
-	$plugins->add_hook('member_profile_end', 'simplelikesProfile');
-}
+$plugins->add_hook('member_profile_end', 'simplelikesProfile');
 function simplelikesProfile()
 {
 	global $mybb, $db, $lang, $memprofile, $templates, $postsLiked, $likesReceived;
@@ -347,15 +377,13 @@ function simplelikesProfile()
 
 	// Number of likes user's posts have
 	$queryString = "SELECT COUNT(l.id) AS count FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.uid = {$uid}";
-	$query = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
-	$postLikes = (int) $db->fetch_field($query, 'count');
+	$query       = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
+	$postLikes   = (int) $db->fetch_field($query, 'count');
 	eval("\$likesReceived = \"".$templates->get('simplelikes_profile_likes_received')."\";");
 	unset($query);
 }
 
-if ($settings['simplelikes_enabled']) {
-	$plugins->add_hook('myalerts_load_lang', 'simplelikesAlertSettings');
-}
+$plugins->add_hook('myalerts_load_lang', 'simplelikesAlertSettings');
 function simplelikesAlertSettings()
 {
 	global $lang, $baseSettings, $lang;
@@ -364,13 +392,11 @@ function simplelikesAlertSettings()
 		$lang->load('simplelikes');
 	}
 
-	$baseSettings[] = 'simplelikes';
+	$baseSettings[]                     = 'simplelikes';
 	$lang->myalerts_setting_simplelikes = $lang->simplelikes_alert_setting;
 }
 
-if ($settings['simplelikes_enabled']) {
-	$plugins->add_hook('myalerts_alerts_output_start', 'simplelikesAlertOutput');
-}
+$plugins->add_hook('myalerts_alerts_output_start', 'simplelikesAlertOutput');
 function simplelikesAlertOutput(&$alert)
 {
 	global $mybb, $lang;
@@ -384,9 +410,7 @@ function simplelikesAlertOutput(&$alert)
 	}
 }
 
-if ($settings['simplelikes_enabled']) {
-	$plugins->add_hook('global_start', 'simplelikesGlobal');
-}
+$plugins->add_hook('global_start', 'simplelikesGlobal');
 function simplelikesGlobal()
 {
 	global $templatelist, $mybb;
@@ -418,9 +442,7 @@ function simplelikesGlobal()
 	}
 }
 
-if ($settings['simplelikes_enabled']) {
-	$plugins->add_hook('misc_start', 'simplelikesMisc');
-}
+$plugins->add_hook('misc_start', 'simplelikesMisc');
 function simplelikesMisc()
 {
 	global $mybb;
@@ -498,12 +520,11 @@ function simplelikesMisc()
 			$page = 1;
 		}
 
-		if ($page AND $page > 0)
-		{
-			$start = ($page - 1) * $perpage;
+		if ($page AND $page > 0) {
+			$start = ($page - 1) * 20;
 		} else {
 			$start = 0;
-			$page = 1;
+			$page  = 1;
 		}
 		$multipage = multipage($count, 20, $page, "misc.php?action=post_likes_by_user&user_id={$user_id}");
 
@@ -511,9 +532,9 @@ function simplelikesMisc()
 
 		add_breadcrumb($lang->simplelikes_likes_by_user, "misc.php?action=post_likes_by_user&user_id={$user_id}");
 
-		$likes = '';
+		$likes       = '';
 		$queryString = "SELECT * FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE l.user_id = {$user_id} ORDER BY l.id DESC LIMIT {$start}, 20";
-		$query = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
+		$query       = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
 		while ($like = $db->fetch_array($query)) {
 			$altbg            = alt_trow();
 			$like['postlink'] = get_post_link((int) $like['post_id']).'#pid'.(int) $like['post_id'];
@@ -543,8 +564,8 @@ function simplelikesMisc()
 		$user    = get_user($user_id);
 
 		$queryString = "SELECT COUNT(*) AS count FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.uid = {$user_id} GROUP BY p.pid";
-		$query = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
-		$count = (int) $db->fetch_field($query, 'count');
+		$query       = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
+		$count       = (int) $db->fetch_field($query, 'count');
 		unset($query);
 
 		$page  = (int) $mybb->input['page'];
@@ -558,12 +579,11 @@ function simplelikesMisc()
 			$page = 1;
 		}
 
-		if ($page AND $page > 0)
-		{
-			$start = ($page - 1) * $perpage;
+		if ($page AND $page > 0) {
+			$start = ($page - 1) * 20;
 		} else {
 			$start = 0;
-			$page = 1;
+			$page  = 1;
 		}
 		$multipage = multipage($count, 20, $page, "misc.php?action=post_likes_received_by_user&user_id={$user_id}");
 
@@ -571,9 +591,9 @@ function simplelikesMisc()
 
 		add_breadcrumb($lang->simplelikes_likes_by_user, "misc.php?action=post_likes_by_user&user_id={$user_id}");
 
-		$likes = '';
+		$likes       = '';
 		$queryString = "SELECT *, COUNT(id) AS count FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.uid = {$user_id} GROUP BY p.pid ORDER BY l.id DESC LIMIT {$start}, 20";
-		$query = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
+		$query       = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
 		while ($like = $db->fetch_array($query)) {
 			$altbg            = alt_trow();
 			$like['postlink'] = get_post_link((int) $like['post_id']).'#pid'.(int) $like['post_id'];
@@ -587,9 +607,7 @@ function simplelikesMisc()
 	}
 }
 
-if ($settings['simplelikes_enabled']) {
-	$plugins->add_hook('xmlhttp', 'simplelikesAjax');
-}
+$plugins->add_hook('xmlhttp', 'simplelikesAjax');
 function simplelikesAjax()
 {
 	global $mybb, $db, $lang, $templates;
@@ -607,11 +625,11 @@ function simplelikesAjax()
 			xmlhttp_error($lang->simplelikes_error_post_id);
 		}
 
-		$pid = (int) $mybb->input['post_id'];
+		$pid  = (int) $mybb->input['post_id'];
 		$post = get_post($pid);
 
 		if (!$mybb->settings['simplelikes_can_like_own'] AND $post['uid'] == $mybb->user['uid']) {
-			if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) AND strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+			if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) AND strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
 				header('Content-type: application/json');
 				echo json_encode(array('error' => $lang->simplelikes_error_own_post));
 			} else {
@@ -621,7 +639,7 @@ function simplelikesAjax()
 		}
 
 		if (!$mybb->usergroup['simplelikes_can_like']) {
-			if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) AND strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+			if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) AND strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
 				header('Content-type: application/json');
 				echo json_encode(array('error' => $lang->simplelikes_error_perms));
 			} else {
@@ -645,15 +663,15 @@ function simplelikesAjax()
 
 				if (isset($Alerts) AND $Alerts instanceof Alerts AND $mybb->settings['myalerts_enabled']) {
 					if ($result == 'like deleted') {
-						$query = $db->simple_select('alerts', 'id', "alert_type = 'simplelikes' AND tid = {$pid} AND uid = ".(int) $mybb->user['uid']);
+						$query   = $db->simple_select('alerts', 'id', "alert_type = 'simplelikes' AND tid = {$pid} AND uid = ".(int) $mybb->user['uid']);
 						$alertId = $db->fetch_field($query, 'id');
 						$Alerts->deleteAlerts($alertId);
 					} else {
 						$query = $db->simple_select('alerts', 'id', "alert_type = 'simplelikes' AND tid = {$pid} AND uid = ".(int) $mybb->user['uid']);
 						if ($db->num_rows($query) == 0) {
 							unset($query);
-							$queryString = "SELECT s.*, v.*, u.uid FROM %salert_settings s LEFT JOIN %salert_setting_values v ON (v.setting_id = s.id) LEFT JOIN %susers u ON (v.user_id = u.uid) WHERE u.uid = ". (int) $post['uid'] ." AND s.code = 'simplelikes' LIMIT 1";
-							$query = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX, TABLE_PREFIX));
+							$queryString = "SELECT s.*, v.*, u.uid FROM %salert_settings s LEFT JOIN %salert_setting_values v ON (v.setting_id = s.id) LEFT JOIN %susers u ON (v.user_id = u.uid) WHERE u.uid = ".(int) $post['uid']." AND s.code = 'simplelikes' LIMIT 1";
+							$query       = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX, TABLE_PREFIX));
 
 							$userSetting = $db->fetch_array($query);
 
@@ -666,12 +684,13 @@ function simplelikesAjax()
 				}
 			}
 
-			if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) AND strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+			if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) AND strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
 				header('Content-type: application/json');
-				$postLikes = array();
+				$postLikes       = array();
 				$postLikes[$pid] = $likeSystem->getLikes($pid);
-				$likeString = '';
-				$likeString = $likeSystem->formatLikes($postLikes, $post);
+				$likeString      = '';
+				$likeString      = $likeSystem->formatLikes($postLikes, $post);
+				$templateString  = '';
 				eval("\$templateString = \"".$templates->get('simplelikes_likebar')."\";");
 				echo json_encode(array('likeString' => $likeString, 'templateString' => $templateString, 'buttonString' => $buttonText));
 			} else {

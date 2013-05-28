@@ -40,7 +40,8 @@ class Likes
 	 * Create a new Likes object.
 	 *
 	 * @param MyBB $mybbIn The MyBB object.
-	 * @param DB_* $dbIn A Database instance object of type DB_MySQL, DB_MySQLi, DB_PgSQL or DB_SQLite.
+	 * @param      DB_     * $dbIn A Database instance object of type DB_MySQL, DB_MySQLi, DB_PgSQL or DB_SQLite.
+	 *
 	 * @return null
 	 */
 	public function __construct(MyBB $mybbIn, $dbIn, MyLanguage $langIn)
@@ -60,6 +61,7 @@ class Likes
 	 * Add or remove a like for a specific post. Likes act as if toggled.
 	 *
 	 * @param int $pid The post id to (un)like.
+	 *
 	 * @return int|string The insert id or a string "like deleted".
 	 */
 	public function likePost($pid)
@@ -70,6 +72,7 @@ class Likes
 		$query = $this->db->simple_select('post_likes', '*', "post_id = {$pid} AND user_id = {$uid}", array('limit' => 1));
 		if ($this->db->num_rows($query) > 0) {
 			$this->db->delete_query('post_likes', "post_id = {$pid} AND user_id = {$uid}", 1);
+
 			return 'like deleted';
 		} else {
 			$insertArray = array(
@@ -85,6 +88,7 @@ class Likes
 	 * Get all likes for a specific post or set of posts.
 	 *
 	 * @param int|array $pid The post id(s) to fetch likes for.
+	 *
 	 * @return array The likes, along with the user details for the user that performed the like.
 	 */
 	public function getLikes($pid)
@@ -94,7 +98,7 @@ class Likes
 			$inClause = str_replace('pid', 'l.post_id', $pid);
 
 			$queryString = "SELECT l.*, u.username, u.avatar, u.usergroup, u.displaygroup FROM %spost_likes l LEFT JOIN %susers u ON (l.user_id = u.uid) WHERE {$inClause}";
-			$query = $this->db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
+			$query       = $this->db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
 			while ($like = $this->db->fetch_array($query)) {
 				$likes[(int) $like['post_id']][(int) $like['user_id']] = $like;
 			}
@@ -102,7 +106,7 @@ class Likes
 			$pid = (int) $pid;
 
 			$queryString = "SELECT l.*, u.username, u.avatar, u.usergroup, u.displaygroup FROM %spost_likes l LEFT JOIN %susers u ON (l.user_id = u.uid) WHERE l.post_id = {$pid}";
-			$query = $this->db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
+			$query       = $this->db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
 			while ($like = $this->db->fetch_array($query)) {
 				$likes[(int) $like['user_id']] = $like;
 			}
@@ -115,7 +119,8 @@ class Likes
 	 * Format likes into a string for output in the psotbit.
 	 *
 	 * @param array $postLikes An array of likes for posts.
-	 * @param array $post The originator post's array.
+	 * @param array $post      The originator post's array.
+	 *
 	 * @return string The formatted likes.
 	 */
 	public function formatLikes($postLikes, $post)
@@ -139,7 +144,7 @@ class Likes
 		}
 
 		if ($goTo > 0) {
-			for ($i=0; $i < $goTo; $i++) {
+			for ($i = 0; $i < $goTo; $i++) {
 				if (!empty($postLikes[(int) $post['pid']])) {
 					$random      = $postLikes[$post['pid']][array_rand($postLikes[(int) $post['pid']])];
 					$likeArray[] = build_profile_link(htmlspecialchars_uni($random['username']), $random['user_id']);
