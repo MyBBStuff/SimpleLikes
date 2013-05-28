@@ -345,8 +345,8 @@ function simplelikesPostbit(&$post)
 		} else {
 			$postLikesReceived                     = array();
 			$pid                                   = (int) $post['pid'];
-			$queryString                           = "SELECT p.uid, COUNT(l.id) AS count FROM %spost_likes l RIGHT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.pid = {$pid} GROUP BY p.uid";
-			$query                                 = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
+			$queryString                           = "SELECT p.uid, (SELECT COUNT(*) FROM %spost_likes l LEFT JOIN %sposts mp ON (l.post_id = mp.pid) WHERE mp.uid = p.uid) AS count FROM %sposts p WHERE p = {$pid} GROUP BY p.uid";
+			$query                                 = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX, TABLE_PREFIX));
 			$postLikesReceived[(int) $post['uid']] = (int) $db->fetch_field($query, 'count');
 		}
 
