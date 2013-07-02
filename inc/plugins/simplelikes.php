@@ -7,7 +7,7 @@
  * @package Simple Likes
  * @author  Euan T. <euan@euantor.com>
  * @license http://opensource.org/licenses/mit-license.php MIT license
- * @version 1.2
+ * @version 1.3
  */
 
 if (!defined('IN_MYBB')) {
@@ -28,7 +28,7 @@ function simplelikes_info()
 		'website'       => 'http://www.mybbstuff.com',
 		'author'        => 'euantor',
 		'authorsite'    => 'http://www.euantor.com',
-		'version'       => '1.2',
+		'version'       => '1.3',
 		'guid'          => '',
 		'compatibility' => '16*',
 	);
