@@ -58,7 +58,9 @@ function simplelikes_install()
 		);
 	}
 
-	$db->insert_query('alert_settings', array('code' => 'simplelikes'));
+	if ($db->table_exists('alert_settings')) {
+		$db->insert_query('alert_settings', array('code' => 'simplelikes'));
+	}
 
 	if (!$db->field_exists('simplelikes_can_like', 'usergroups')) {
 		$db->add_column('usergroups', 'simplelikes_can_like', "INT(1) NOT NULL DEFAULT '0'");
@@ -118,8 +120,13 @@ function simplelikes_uninstall()
 
 	$cache->update_usergroups();
 
-	$db->delete_query('alerts', "alert_type = 'simplelikes'");
-	$db->delete_query('alert_settings', "code = 'simplelikes'");
+	if ($db->table_exists('alerts')) {
+		$db->delete_query('alerts', "alert_type = 'simplelikes'");
+	}
+
+	if ($db->table_exists('alert_settings')) {
+		$db->delete_query('alert_settings', "code = 'simplelikes'");
+	}
 }
 
 function simplelikes_activate()
