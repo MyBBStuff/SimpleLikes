@@ -214,7 +214,6 @@ function simplelikes_activate()
     require_once MYBB_ROOT . '/inc/adminfunctions_templates.php';
 
     $simpleLikesJavascript = <<<HTML
-$1
 <script type="text/javascript">
     if (typeof jQuery == 'undefined') {
         document.write(unescape("%3Cscript src='//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.0/jquery.min.js' type='text/javascript'%3E%3C/script%3E"));
@@ -225,7 +224,7 @@ HTML;
 
     find_replace_templatesets(
         'headerinclude',
-        '/(.*)$/',
+        '/$/',
         $simpleLikesJavascript
     );
 
@@ -271,7 +270,6 @@ function simplelikes_deactivate()
     require_once MYBB_ROOT . '/inc/adminfunctions_templates.php';
 
     $simpleLikesJavascript = <<<HTML
-
 <script type="text/javascript">
     if (typeof jQuery == 'undefined') {
         document.write(unescape("%3Cscript src='//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.0/jquery.min.js' type='text/javascript'%3E%3C/script%3E"));
