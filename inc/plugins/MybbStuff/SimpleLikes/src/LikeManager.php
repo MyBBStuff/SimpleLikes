@@ -1,5 +1,7 @@
 <?php
 
+namespace MybbStuff\Simplelikes;
+
 /**
  * Likes class.
  *
@@ -10,13 +12,13 @@
  * @license http://opensource.org/licenses/mit-license.php MIT license
  * @version 1.3.1
  */
-class MybbStuff_SimpleLikes_LikeManager
+class LikeManager
 {
     /**
      * Our Database connection object.
      *
      * @access private
-     * @var mixed
+     * @var \DB_MySQLi
      */
     private $db;
 
@@ -24,7 +26,7 @@ class MybbStuff_SimpleLikes_LikeManager
      * Our MyBB object.
      *
      * @access private
-     * @var MyBB
+     * @var \MyBB
      */
     private $mybb;
 
@@ -32,30 +34,21 @@ class MybbStuff_SimpleLikes_LikeManager
      * Our Language object from MyBB.
      *
      * @access private
-     * @var MyLanguage
+     * @var \MyLanguage
      */
     private $lang;
 
     /**
      * Create a new Likes object.
      *
-     * @param MyBB $mybbIn The MyBB object.
-     * @param      DB_     * $dbIn A Database instance object of type DB_MySQL, DB_MySQLi, DB_PgSQL or DB_SQLite.
-     *
-     * @return null
+     * @param \MyBB       $mybbIn The MyBB object.
+     * @param \DB_MySQLi  $dbIn   A Database instance object of type DB_MySQL, DB_MySQLi, DB_PgSQL or DB_SQLite.
+     * @param \MyLanguage $langIn The language class from MyBB used to manage language files and strings.
      */
-    public function __construct(MyBB $mybbIn, $dbIn, MyLanguage $langIn)
+    public function __construct(\MyBB $mybbIn, \DB_MySQLi $dbIn, \MyLanguage $langIn)
     {
         $this->mybb = $mybbIn;
-
-        if ($dbIn instanceof DB_MySQL OR $dbIn instanceof DB_MySQLi OR $dbIn instanceof DB_PgSQL OR $dbIn instanceof DB_SQLite) {
-            $this->db = $dbIn;
-        } else {
-            throw new InvalidArgumentException('Expected object of class DB_MySQL|DB_MySQLi|DB_PgSQL|DB_SQLite, but found ' . get_class(
-                    $dbIn
-                ));
-        }
-
+        $this->db   = $dbIn;
         $this->lang = $langIn;
     }
 

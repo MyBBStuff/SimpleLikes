@@ -20,6 +20,11 @@ if (!defined('PLUGINLIBRARY')) {
     define('PLUGINLIBRARY', MYBB_ROOT . 'inc/plugins/pluginlibrary.php');
 }
 
+require_once SIMPLELIKES_PLUGIN_PATH . 'vendor/autoload.php';
+
+$importManager = MybbStuff\SimpleLikes\Import\Manager::getInstance();
+$importManager->addImporter('\MybbStuff\SimpleLikes\Import\ThankYouLikeImporter');
+
 function simplelikes_info()
 {
     return array(
@@ -30,7 +35,7 @@ function simplelikes_info()
         'authorsite'    => 'http://www.euantor.com',
         'version'       => '1.4.0',
         'guid'          => '',
-        'compatibility' => '16*',
+        'compatibility' => '1*',
     );
 }
 
@@ -357,9 +362,8 @@ function simplelikesPostbit(&$post)
         $lang->load('simplelikes');
     }
 
-    require_once SIMPLELIKES_PLUGIN_PATH . 'LikeManager.php';
     try {
-        $likeSystem = new MybbStuff_SimpleLikes_LikeManager($mybb, $db, $lang);
+        $likeSystem = new MybbStuff\SimpleLikes\LikeManager($mybb, $db, $lang);
     } catch (InvalidArgumentException $e) {
         die($e->getMessage());
     }
@@ -540,9 +544,8 @@ function simplelikesMisc()
         $pid  = (int) $mybb->input['post_id'];
         $post = get_post($pid);
 
-        require_once SIMPLELIKES_PLUGIN_PATH . 'LikeManager.php';
         try {
-            $likeSystem = new MybbStuff_SimpleLikes_LikeManager($mybb, $db, $lang);
+            $likeSystem = new MybbStuff\SimpleLikes\LikeManager($mybb, $db, $lang);
         } catch (InvalidArgumentException $e) {
             xmlhttp_error($e->getMessage());
         }
@@ -754,9 +757,8 @@ function simplelikesAjax()
             die();
         }
 
-        require_once SIMPLELIKES_PLUGIN_PATH . 'LikeManager.php';
         try {
-            $likeSystem = new MybbStuff_SimpleLikes_LikeManager($mybb, $db, $lang);
+            $likeSystem = new MybbStuff\SimpleLikes\LikeManager($mybb, $db, $lang);
         } catch (InvalidArgumentException $e) {
             xmlhttp_error($e->getMessage());
         }
