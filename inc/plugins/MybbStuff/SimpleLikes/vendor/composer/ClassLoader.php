@@ -166,7 +166,7 @@ class ClassLoader
                 throw new \InvalidArgumentException("A non-empty PSR-4 prefix must end with a namespace separator.");
             }
             $this->prefixLengthsPsr4[$prefix[0]][$prefix] = $length;
-            $this->prefixDirsPsr4[$prefix] = (array) $paths;
+            $this->prefixDirsPsr4[$prefix]                = (array) $paths;
         } elseif ($prepend) {
             // Prepend directories for an already registered namespace.
             $this->prefixDirsPsr4[$prefix] = array_merge(
@@ -215,18 +215,8 @@ class ClassLoader
                 throw new \InvalidArgumentException("A non-empty PSR-4 prefix must end with a namespace separator.");
             }
             $this->prefixLengthsPsr4[$prefix[0]][$prefix] = $length;
-            $this->prefixDirsPsr4[$prefix] = (array) $paths;
+            $this->prefixDirsPsr4[$prefix]                = (array) $paths;
         }
-    }
-
-    /**
-     * Turns on searching the include path for class files.
-     *
-     * @param bool $useIncludePath
-     */
-    public function setUseIncludePath($useIncludePath)
-    {
-        $this->useIncludePath = $useIncludePath;
     }
 
     /**
@@ -238,6 +228,16 @@ class ClassLoader
     public function getUseIncludePath()
     {
         return $this->useIncludePath;
+    }
+
+    /**
+     * Turns on searching the include path for class files.
+     *
+     * @param bool $useIncludePath
+     */
+    public function setUseIncludePath($useIncludePath)
+    {
+        $this->useIncludePath = $useIncludePath;
     }
 
     /**
@@ -261,7 +261,8 @@ class ClassLoader
     /**
      * Loads the given class or interface.
      *
-     * @param  string    $class The name of the class
+     * @param  string $class The name of the class
+     *
      * @return bool|null True if loaded, null otherwise
      */
     public function loadClass($class)

@@ -39,7 +39,7 @@
 
 				return false;
 			},
-			togglePostLikeSuccess: function togglePostLikeSuccess(data) {
+			togglePostLikeSuccess : function togglePostLikeSuccess(data) {
 				if (data.errors) {
 					$.each(data.errors, function (index, error) {
 						if (error) {

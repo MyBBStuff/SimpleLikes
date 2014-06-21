@@ -1,17 +1,17 @@
 {
-    "name": "mybbstuff/simple-likes",
-    "description": "A simple like system for MyBB.",
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "Euan Torano",
-            "email": "euan@euantor.com"
-        }
-    ],
-    "require": {},
-    "autoload": {
-        "psr-4": {
-            "MybbStuff\\SimpleLikes\\": "src/"
-        }
-    }
+	"name" : "mybbstuff/simple-likes",
+	"description" : "A simple like system for MyBB.",
+	"license" : "MIT",
+	"authors" : [
+		{
+			"name" : "Euan Torano",
+			"email" : "euan@euantor.com"
+		}
+	],
+	"require" : {},
+	"autoload" : {
+		"psr-4" : {
+			"MybbStuff\\SimpleLikes\\" : "src/"
+		}
+	}
 }

@@ -10,7 +10,7 @@ namespace MybbStuff\Simplelikes;
  * @package Simple Likes
  * @author  Euan T. <euan@euantor.com>
  * @license http://opensource.org/licenses/mit-license.php MIT license
- * @version 1.3.1
+ * @version 1.4.0
  */
 class LikeManager
 {
@@ -57,7 +57,7 @@ class LikeManager
      *
      * @param int $postId The post id to (un)like.
      *
-     * @return int|string The insert id or a string "like deleted".
+     * @return int The insert id or 0 if the action was a like deletion.
      */
     public function likePost($postId)
     {
@@ -74,7 +74,7 @@ class LikeManager
         if ($this->db->num_rows($query) > 0) {
             $this->db->delete_query('post_likes', "post_id = {$postId} AND user_id = {$userId}", 1);
 
-            return 'like deleted';
+            return 0;
         } else {
             $insertArray = array(
                 'post_id' => $postId,

@@ -55,6 +55,7 @@ class Manager
      * Add an importer to the manager.
      *
      * @param string $importerClass The importer class to be added.
+     *
      * @throws \InvalidArgumentException Thrown if $importerClass does not exist or doesn't extend AbstractImporter.
      */
     public function addImporter($importerClass = '')
@@ -70,7 +71,9 @@ class Manager
             }
         }
 
-        throw new \InvalidArgumentException('$importerClass should be a valid class name that extends AbstractImporter');
+        throw new \InvalidArgumentException(
+            '$importerClass should be a valid class name that extends AbstractImporter'
+        );
     }
 
     /**

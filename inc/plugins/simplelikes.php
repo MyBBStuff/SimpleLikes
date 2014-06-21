@@ -7,18 +7,16 @@
  * @package Simple Likes
  * @author  Euan T. <euan@euantor.com>
  * @license http://opensource.org/licenses/mit-license.php MIT license
- * @version 1.3.1
+ * @version 1.4.0
  */
 
-if (!defined('IN_MYBB')) {
-    die('Direct initialization of this file is not allowed.<br /><br />Please make sure IN_MYBB is defined.');
-}
+defined(
+    'IN_MYBB'
+) or die('Direct initialization of this file is not allowed.<br /><br />Please make sure IN_MYBB is defined.');
 
 define('SIMPLELIKES_PLUGIN_PATH', MYBB_ROOT . 'inc/plugins/MybbStuff/SimpleLikes/');
 
-if (!defined('PLUGINLIBRARY')) {
-    define('PLUGINLIBRARY', MYBB_ROOT . 'inc/plugins/pluginlibrary.php');
-}
+defined('PLUGINLIBRARY') or define('PLUGINLIBRARY', MYBB_ROOT . 'inc/plugins/pluginlibrary.php');
 
 require_once SIMPLELIKES_PLUGIN_PATH . 'vendor/autoload.php';
 
@@ -151,14 +149,13 @@ function simplelikes_activate()
         admin_redirect('index.php?module=config-plugins');
     }
 
-    $plugin_info                    = simplelikes_info();
-    $this_version                   = $plugin_info['version'];
-    $euantor_plugins                = $cache->read('euantor_plugins');
-    $euantor_plugins['simplelikes'] = array(
+    $pluginInfo                  = simplelikes_info();
+    $pluginsCache                = $cache->read('mybbstuff_plugins');
+    $pluginsCache['simplelikes'] = array(
         'title'   => 'SimpleLikes',
-        'version' => $plugin_info['version'],
+        'version' => $pluginInfo['version'],
     );
-    $cache->update('euantor_plugins', $euantor_plugins);
+    $cache->update('mybbstuff_plugins', $pluginsCache);
 
     $PL->settings(
         'simplelikes',
@@ -199,7 +196,6 @@ function simplelikes_activate()
     $db->insert_query('settings', $insertArray);
     rebuild_settings();
 
-    // Templating, like a BAWS - http://www.euantor.com/185-templates-in-mybb-plugins
     if (is_dir(SIMPLELIKES_PLUGIN_PATH . 'templates')) {
         $dir       = new DirectoryIterator(SIMPLELIKES_PLUGIN_PATH . 'templates');
         $templates = array();
@@ -365,7 +361,7 @@ function simplelikesPostbit(&$post)
     try {
         $likeSystem = new MybbStuff\SimpleLikes\LikeManager($mybb, $db, $lang);
     } catch (InvalidArgumentException $e) {
-        die($e->getMessage());
+        return;
     }
 
     if (is_string($pids)) {
@@ -728,8 +724,8 @@ function simplelikesAjax()
             xmlhttp_error($lang->simplelikes_error_post_id);
         }
 
-        $postId  = (int) $mybb->input['post_id'];
-        $post = get_post($postId);
+        $postId = (int) $mybb->input['post_id'];
+        $post   = get_post($postId);
 
         if (!$mybb->settings['simplelikes_can_like_own'] AND $post['uid'] == $mybb->user['uid']) {
             if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) AND strtolower(
@@ -761,82 +757,84 @@ function simplelikesAjax()
             $likeSystem = new MybbStuff\SimpleLikes\LikeManager($mybb, $db, $lang);
         } catch (InvalidArgumentException $e) {
             xmlhttp_error($e->getMessage());
+
+            return;
         }
 
         $buttonText = $lang->simplelikes_like;
 
-        if ($result = $likeSystem->likePost($postId)) {
-            if ($mybb->settings['myalerts_alert_simplelikes']) {
-                global $Alerts;
+        $result = $likeSystem->likePost($postId);
 
-                if (isset($Alerts) AND $Alerts instanceof Alerts AND $mybb->settings['myalerts_enabled']) {
-                    if ($result == 'like deleted') {
-                        $query   = $db->simple_select(
-                            'alerts',
-                            'id',
-                            "alert_type = 'simplelikes' AND tid = {$postId} AND uid = " . (int) $mybb->user['uid']
+        if ($mybb->settings['myalerts_alert_simplelikes']) {
+            global $Alerts;
+
+            if (isset($Alerts) AND $Alerts instanceof Alerts AND $mybb->settings['myalerts_enabled']) {
+                if ($result == 0) {
+                    $query   = $db->simple_select(
+                        'alerts',
+                        'id',
+                        "alert_type = 'simplelikes' AND tid = {$postId} AND uid = " . (int) $mybb->user['uid']
+                    );
+                    $alertId = $db->fetch_field($query, 'id');
+                    $Alerts->deleteAlerts($alertId);
+                } else {
+                    $query = $db->simple_select(
+                        'alerts',
+                        'id',
+                        "alert_type = 'simplelikes' AND tid = {$postId} AND uid = " . (int) $mybb->user['uid']
+                    );
+                    if ($db->num_rows($query) == 0) {
+                        unset($query);
+                        $queryString = "SELECT s.*, v.*, u.uid FROM %salert_settings s LEFT JOIN %salert_setting_values v ON (v.setting_id = s.id) LEFT JOIN %susers u ON (v.user_id = u.uid) WHERE u.uid = " . (int) $post['uid'] . " AND s.code = 'simplelikes' LIMIT 1";
+                        $query       = $db->write_query(
+                            sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX, TABLE_PREFIX)
                         );
-                        $alertId = $db->fetch_field($query, 'id');
-                        $Alerts->deleteAlerts($alertId);
-                    } else {
-                        $query = $db->simple_select(
-                            'alerts',
-                            'id',
-                            "alert_type = 'simplelikes' AND tid = {$postId} AND uid = " . (int) $mybb->user['uid']
-                        );
-                        if ($db->num_rows($query) == 0) {
-                            unset($query);
-                            $queryString = "SELECT s.*, v.*, u.uid FROM %salert_settings s LEFT JOIN %salert_setting_values v ON (v.setting_id = s.id) LEFT JOIN %susers u ON (v.user_id = u.uid) WHERE u.uid = " . (int) $post['uid'] . " AND s.code = 'simplelikes' LIMIT 1";
-                            $query       = $db->write_query(
-                                sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX, TABLE_PREFIX)
+
+                        $userSetting = $db->fetch_array($query);
+
+                        if ((int) $userSetting['value'] == 1) {
+                            $Alerts->addAlert(
+                                $post['uid'],
+                                'simplelikes',
+                                $postId,
+                                $mybb->user['uid'],
+                                array('tid' => $post['tid'])
                             );
-
-                            $userSetting = $db->fetch_array($query);
-
-                            if ((int) $userSetting['value'] == 1) {
-                                $Alerts->addAlert(
-                                    $post['uid'],
-                                    'simplelikes',
-                                    $postId,
-                                    $mybb->user['uid'],
-                                    array('tid' => $post['tid'])
-                                );
-                            }
                         }
                     }
                 }
-
-                if ($result != 'like deleted') {
-                    $buttonText = $lang->simplelikes_unlike;
-                }
             }
 
-            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower(
-                    $_SERVER['HTTP_X_REQUESTED_WITH']
-                ) == 'xmlhttprequest'
-            ) {
-                header('Content-type: application/json');
-                $postLikes       = array();
-                $postLikes[$postId] = $likeSystem->getLikes($postId);
-                $likeString      = '';
-                $likeString      = $likeSystem->formatLikes($postLikes, $post);
-                $templateString  = '';
-                eval("\$templateString = \"" . $templates->get('simplelikes_likebar') . "\";");
-                echo json_encode(
-                    array(
-                        'postId' => $postId,
-                        'likeString'     => $likeString,
-                        'templateString' => $templateString,
-                        'buttonString'   => $buttonText
-                    )
-                );
-            } else {
-                redirect(
-                    get_post_link($postId) . '#pid' . $postId,
-                    $lang->simplelikes_thanks,
-                    $lang->simplelikes_thanks_title
-                );
+            if ($result != 0) {
+                $buttonText = $lang->simplelikes_unlike;
             }
+        }
+
+        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower(
+                $_SERVER['HTTP_X_REQUESTED_WITH']
+            ) == 'xmlhttprequest'
+        ) {
+            header('Content-type: application/json');
+            $postLikes          = array();
+            $postLikes[$postId] = $likeSystem->getLikes($postId);
+            $likeString         = '';
+            $likeString         = $likeSystem->formatLikes($postLikes, $post);
+            $templateString     = '';
+            eval("\$templateString = \"" . $templates->get('simplelikes_likebar') . "\";");
+            echo json_encode(
+                array(
+                    'postId'         => $postId,
+                    'likeString'     => $likeString,
+                    'templateString' => $templateString,
+                    'buttonString'   => $buttonText
+                )
+            );
+        } else {
+            redirect(
+                get_post_link($postId) . '#pid' . $postId,
+                $lang->simplelikes_thanks,
+                $lang->simplelikes_thanks_title
+            );
         }
     }
 }

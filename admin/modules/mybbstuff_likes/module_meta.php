@@ -9,62 +9,65 @@
  */
 
 // Disallow direct access to this file for security reasons
-if(!defined('IN_MYBB'))
-{
-	die('Direct initialization of this file is not allowed.<br /><br />Please make sure IN_MYBB is defined.');
+if (!defined('IN_MYBB')) {
+    die('Direct initialization of this file is not allowed.<br /><br />Please make sure IN_MYBB is defined.');
 }
 
 function mybbstuff_likes_meta()
 {
-	global $page, $lang, $plugins;
+    global $page, $lang, $plugins;
 
-	if (!$lang->simplelikes) {
-		$lang->load('simplelikes');
-	}
+    if (!$lang->simplelikes) {
+        $lang->load('simplelikes');
+    }
 
-	$sub_menu = array();
-	$sub_menu['10'] = array('id' => 'import', 'title' => $lang->simplelikes_import, 'link' => 'index.php?module=mybbstuff_likes-import');
+    $subMenu = array(
+        10 => array(
+            'id'    => 'import',
+            'title' => $lang->simplelikes_import,
+            'link'  => 'index.php?module=mybbstuff_likes-import'
+        ),
+    );
 
-	$sub_menu = $plugins->run_hooks('admin_simplelikes_menu', $sub_menu);
+    $subMenu = $plugins->run_hooks('admin_simplelikes_menu', $subMenu);
 
-	$page->add_menu_item($lang->simplelikes, 'mybbstuff_likes', 'index.php?module=mybbstuff_likes', 10, $sub_menu);
+    $page->add_menu_item($lang->simplelikes, 'mybbstuff_likes', 'index.php?module=mybbstuff_likes', 60, $subMenu);
 
-	return true;
+    return true;
 }
 
 function mybbstuff_likes_action_handler($action)
 {
-	global $page, $plugins;
+    global $page, $plugins;
 
-	$page->active_module = 'mybbstuff-likes';
+    $page->active_module = 'mybbstuff_likes';
 
-	$actions = array(
-		'import' => array('active' => 'import', 'file' => 'import.php'),
-	);
+    $actions = array(
+        'import' => array('active' => 'import', 'file' => 'import.php'),
+    );
 
-	$actions = $plugins->run_hooks('admin_simplelikes_action_handler', $actions);
+    $actions = $plugins->run_hooks('admin_simplelikes_action_handler', $actions);
 
-	if(isset($actions[$action]))
-	{
-		$page->active_action = $actions[$action]['active'];
-		return $actions[$action]['file'];
-	}
-	else
-	{
-		$page->active_action = 'import';
-		return 'import.php';
-	}
+    if (isset($actions[$action])) {
+        $page->active_action = $actions[$action]['active'];
+
+        return $actions[$action]['file'];
+    } else {
+        $page->active_action = 'import';
+
+        return 'import.php';
+    }
 }
 
 function mybbstuff_likes_admin_permissions()
 {
-	global $lang, $plugins;
+    global $lang, $plugins;
 
-	$admin_permissions = array(
-		'import' => $lang->simplelikes_admin_perm_can_import,
-	);
+    $adminPermissions = array(
+        'import' => $lang->simplelikes_admin_perm_can_import,
+    );
 
-	$admin_permissions = $plugins->run_hooks('admin_simplelikes_permissions', $admin_permissions);
+    $adminPermissions = $plugins->run_hooks('admin_simplelikes_permissions', $adminPermissions);
 
-	return array('name' => $lang->simplelikes, 'permissions' => $admin_permissions, 'disporder' => 10);
+    return array('name' => $lang->simplelikes, 'permissions' => $adminPermissions, 'disporder' => 60);
 }
