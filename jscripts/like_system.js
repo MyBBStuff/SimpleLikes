@@ -33,7 +33,7 @@
 						my_post_key : self.postKey,
 						post_id : postId
 					},
-					this.togglePostLikeSuccess,
+					self.togglePostLikeSuccess,
 					"json"
 				);
 
@@ -50,7 +50,7 @@
 					alert(data.error);
 				} else {
 					var likeBar = $("#post_likes_" + data.postId),
-						likeButton = $("#likeButton_post_" + data.postId);
+						likeButton = $("#likeButton_post_" + data.postId + " .postbit_like__text");
 
 					if (likeBar.length !== 0 && data.likeString.length !== 0) {
 						likeBar.html(data.likeString);
@@ -64,6 +64,7 @@
 
 					if (likeButton.length !== 0) {
 						likeButton.text(data.buttonString);
+                        likeButton.attr("title", data.buttonString);
 					}
 				}
 			}

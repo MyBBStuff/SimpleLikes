@@ -1,24 +1,24 @@
 <html>
-	<head>
-		<title>{$mybb->settings['bbname']} - {$lang->simplelikes_likes_by_user}</title>
-		{$headerinclude}
-	</head>
-	<body>
-		{$header}
-		{$multipage}
-		<table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder">
-			<thead>
-				<tr>
-					<th class="thead" colspan="2">
-						<strong>{$lang->simplelikes_likes_by_user}</strong>
-					</th>
-				</tr>
-			</thead>
-			<tbody>
-				{$likes}
-			</tbody>
-		</table>
-		{$multipage}
-		{$footer}
-	</body>
+<head>
+	<title>{$mybb->settings['bbname']} - {$lang->simplelikes_likes_by_user}</title>
+	{$headerinclude}
+</head>
+<body>
+{$header}
+{$multipage}
+<table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder">
+	<thead>
+	<tr>
+		<th class="thead" colspan="2">
+			<strong>{$lang->simplelikes_likes_by_user}</strong>
+		</th>
+	</tr>
+	</thead>
+	<tbody>
+	{$likes}
+	</tbody>
+</table>
+{$multipage}
+{$footer}
+</body>
 </html>

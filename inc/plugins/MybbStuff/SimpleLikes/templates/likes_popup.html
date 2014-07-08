@@ -1,38 +1,39 @@
 <html>
-	<head>
-		<title>Users who liked this post</title>
-		{$headerinclude}
-		<style type="text/css">
-			body {
-				text-align: left;
-			}
+<head>
+	<title>Users who liked this post</title>
+	{$headerinclude}
+	<style type="text/css">
+		body {
+			text-align: left;
+		}
 
-			.liker_avatar {
-				height: 50px;
-				width: 50px;
-				background: #fff;
-				border: 1px solid #ccc;
-				float: left;
-				clear: left;
-				margin-right: 5px;
-				text-align: center;
-			}
+		.liker_avatar {
+			height: 50px;
+			width: 50px;
+			background: #fff;
+			border: 1px solid #ccc;
+			float: left;
+			clear: left;
+			margin-right: 5px;
+			text-align: center;
+		}
 
-			.liker_details img {
-				vertical-align: middle;
-			}
-		</style>
-	</head>
-	<body style="margin:0; padding: 4px; top: 0; left: 0;">
-		<table width="100%" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" border="0" align="center" class="tborder">
-			<tr>
-				<td class="thead">
-					<div class="float_right" style="margin-top: 3px;">
-						<span class="smalltext"><a href="#" onclick="window.close();">Close</a></span></div>
-					<div><strong>Users who liked this post</strong></div>
-				</td>
-			</tr>
-			{$likes}
-		</table>
-	</body>
+		.liker_details img {
+			vertical-align: middle;
+		}
+	</style>
+</head>
+<body style="margin:0; padding: 4px; top: 0; left: 0;">
+<table width="100%" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" border="0" align="center"
+       class="tborder">
+	<tr>
+		<td class="thead">
+			<div class="float_right" style="margin-top: 3px;">
+				<span class="smalltext"><a href="#" onclick="window.close();">Close</a></span></div>
+			<div><strong>Users who liked this post</strong></div>
+		</td>
+	</tr>
+	{$likes}
+</table>
+</body>
 </html>
