@@ -1,6 +1,6 @@
 ;
 (function ($, document, my_post_key) {
-	var MybbStuff = this.MybbStuff = this.MybbStuff || {};
+	this.MybbStuff = this.MybbStuff || {};
 
 	this.MybbStuff.LikeSystem = (function LikeSystemModule($) {
 		var self;
@@ -17,9 +17,9 @@
 		module.prototype = {
 			constructor : module,
 			init : function init() {
-				$("body").on("click", self.selector, self.togglePostLike);
+				$("body").on("click", this.selector, this.togglePostLike);
 
-				return self;
+				return this;
 			},
 			togglePostLike : function togglePostLike(event) {
 				event.preventDefault();
@@ -33,7 +33,7 @@
 						my_post_key : self.postKey,
 						post_id : postId
 					},
-					self.togglePostLikeSuccess,
+					this.togglePostLikeSuccess,
 					"json"
 				);
 
