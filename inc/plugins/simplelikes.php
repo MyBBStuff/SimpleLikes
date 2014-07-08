@@ -33,7 +33,7 @@ function simplelikes_info()
         'authorsite'    => 'http://www.euantor.com',
         'version'       => '1.4.0',
         'guid'          => '',
-        'compatibility' => '1*',
+        'compatibility' => '17*',
     );
 }
 
@@ -215,12 +215,7 @@ function simplelikes_activate()
     require_once MYBB_ROOT . '/inc/adminfunctions_templates.php';
 
     $simpleLikesJavascript = <<<HTML
-<script type="text/javascript">
-    if (typeof jQuery == 'undefined') {
-        document.write(unescape("%3Cscript src='//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.0/jquery.min.js' type='text/javascript'%3E%3C/script%3E"));
-    }
-</script>
-<script type="text/javascript" src="{\$mybb->settings['bburl']}/jscripts/like_system.min.js"></script>
+<script type="text/javascript" src="{\$mybb->asset_url/jscripts/like_system.min.js"></script>
 HTML;
 
     find_replace_templatesets(
@@ -271,12 +266,7 @@ function simplelikes_deactivate()
     require_once MYBB_ROOT . '/inc/adminfunctions_templates.php';
 
     $simpleLikesJavascript = <<<HTML
-<script type="text/javascript">
-    if (typeof jQuery == 'undefined') {
-        document.write(unescape("%3Cscript src='//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.0/jquery.min.js' type='text/javascript'%3E%3C/script%3E"));
-    }
-</script>
-<script type="text/javascript" src="{\$mybb->settings['bburl']}/jscripts/like_system.min.js"></script>
+<script type="text/javascript" src="{\$mybb->asset_url}/jscripts/like_system.min.js"></script>
 HTML;
 
     find_replace_templatesets(

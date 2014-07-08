@@ -1,1 +1,5 @@
-<a href="xmlhttp.php?action=like_post&amp;post_id={$post['pid']}&amp;my_post_key={$mybb->post_code}" class="btn_like" id="likeButton_post_{$post['pid']}">{$buttonText}</a>
+<a id="likeButton_post_{$post['pid']}" class="postbit_like" title="{$buttonText}" href="xmlhttp.php?action=like_post&amp;post_id={$post['pid']}&amp;my_post_key={$mybb->post_code}">
+    <span>
+        {$buttonText}
+    </span>
+</a>
