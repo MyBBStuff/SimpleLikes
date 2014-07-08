@@ -215,7 +215,8 @@ function simplelikes_activate()
     require_once MYBB_ROOT . '/inc/adminfunctions_templates.php';
 
     $simpleLikesJavascript = <<<HTML
-<script type="text/javascript" src="{\$mybb->asset_url/jscripts/like_system.min.js"></script>
+
+<script type="text/javascript" src="{\$mybb->asset_url}/jscripts/like_system.min.js"></script>
 HTML;
 
     find_replace_templatesets(
@@ -266,6 +267,7 @@ function simplelikes_deactivate()
     require_once MYBB_ROOT . '/inc/adminfunctions_templates.php';
 
     $simpleLikesJavascript = <<<HTML
+
 <script type="text/javascript" src="{\$mybb->asset_url}/jscripts/like_system.min.js"></script>
 HTML;
 
