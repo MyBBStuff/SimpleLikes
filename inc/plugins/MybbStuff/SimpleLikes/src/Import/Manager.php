@@ -1,7 +1,5 @@
 <?php
 
-namespace MybbStuff\SimpleLikes\Import;
-
 /**
  * Importer manager class that allows the registering of custom importers extending the AbstractImporter class.
  *
@@ -10,17 +8,17 @@ namespace MybbStuff\SimpleLikes\Import;
  * @license http://opensource.org/licenses/mit-license.php MIT license
  * @version 1.4.0
  */
-class Manager
+class MybbStuff_SimpleLikes_Import_Manager
 {
     /**
      * Singleton instance.
      *
-     * @var Manager $instance
+     * @var MybbStuff_SimpleLikes_Import_Manager $instance
      */
     private static $instance;
 
     /**
-     * @var \DB_MySQLi $db
+     * @var DB_MySQLi $db
      */
     private $db;
 
@@ -38,7 +36,7 @@ class Manager
     /**
      * Get an instance of the import manager.
      *
-     * @return Manager The singleton instance.
+     * @return MybbStuff_SimpleLikes_Import_Manager The singleton instance.
      */
     public static function getInstance()
     {
@@ -64,7 +62,7 @@ class Manager
 
         if (class_exists($importerClass)) {
             $instance = new $importerClass($this->db);
-            if ($instance instanceof AbstractImporter) {
+            if ($instance instanceof MybbStuff_SimpleLikes_Import_AbstractImporter) {
                 $this->importers[] = $importerClass;
 
                 return;
@@ -79,7 +77,7 @@ class Manager
     /**
      * Get all of the registered importers.
      *
-     * @return array
+     * @return MybbStuff_SimpleLikes_Import_AbstractImporter[]
      */
     public function getImporters()
     {

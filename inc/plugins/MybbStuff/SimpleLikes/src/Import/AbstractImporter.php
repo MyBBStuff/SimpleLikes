@@ -1,7 +1,5 @@
 <?php
 
-namespace MybbStuff\SimpleLikes\Import;
-
 /**
  * Base importer class to be extended by all custom importers.
  *
@@ -10,7 +8,7 @@ namespace MybbStuff\SimpleLikes\Import;
  * @license http://opensource.org/licenses/mit-license.php MIT license
  * @version 1.4.0
  */
-abstract class AbstractImporter
+abstract class MybbStuff_SimpleLikes_Import_AbstractImporter
 {
     /**
      * @var \DB_MySQLi $db

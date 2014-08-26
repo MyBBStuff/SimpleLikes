@@ -19,7 +19,7 @@ if (!$lang->simplelikes) {
     $lang->load('simplelikes');
 }
 
-$importManager = MybbStuff\SimpleLikes\Import\Manager::getInstance();
+$importManager = MybbStuff_SimpleLikes_Import_Manager::getInstance();
 
 if (!isset($mybb->input['id'])) {
     $page->add_breadcrumb_item($lang->simplelikes, 'index.php?module=mybbstuff_likes');

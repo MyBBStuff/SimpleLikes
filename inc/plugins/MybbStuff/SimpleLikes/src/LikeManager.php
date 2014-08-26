@@ -1,7 +1,5 @@
 <?php
 
-namespace MybbStuff\Simplelikes;
-
 /**
  * Likes class.
  *
@@ -12,7 +10,7 @@ namespace MybbStuff\Simplelikes;
  * @license http://opensource.org/licenses/mit-license.php MIT license
  * @version 1.4.0
  */
-class LikeManager
+class MybbStuff_SimpleLikes_LikeManager
 {
     /**
      * Our Database connection object.

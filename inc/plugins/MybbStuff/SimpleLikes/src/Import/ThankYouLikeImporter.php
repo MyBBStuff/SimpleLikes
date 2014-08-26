@@ -1,8 +1,6 @@
 <?php
 
-namespace MybbStuff\SimpleLikes\Import;
-
-class ThankYouLikeImporter extends AbstractImporter
+class MybbStuff_SimpleLikes_Import_ThankYouLikeImporter extends MybbStuff_SimpleLikes_Import_AbstractImporter
 {
     /**
      * Get the title of the importer.

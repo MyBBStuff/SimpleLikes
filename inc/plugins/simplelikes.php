@@ -20,8 +20,8 @@ defined('PLUGINLIBRARY') or define('PLUGINLIBRARY', MYBB_ROOT . 'inc/plugins/plu
 
 require_once SIMPLELIKES_PLUGIN_PATH . 'vendor/autoload.php';
 
-$importManager = MybbStuff\SimpleLikes\Import\Manager::getInstance();
-$importManager->addImporter('\MybbStuff\SimpleLikes\Import\ThankYouLikeImporter');
+$importManager = MybbStuff_SimpleLikes_Import_Manager::getInstance();
+$importManager->addImporter('MybbStuff_SimpleLikes_Import_ThankYouLikeImporter');
 
 function simplelikes_info()
 {
@@ -351,7 +351,7 @@ function simplelikesPostbit(&$post)
     }
 
     try {
-        $likeSystem = new MybbStuff\SimpleLikes\LikeManager($mybb, $db, $lang);
+        $likeSystem = new MybbStuff_SimpleLikes_LikeManager($mybb, $db, $lang);
     } catch (InvalidArgumentException $e) {
         return;
     }
@@ -533,7 +533,7 @@ function simplelikesMisc()
         $post = get_post($pid);
 
         try {
-            $likeSystem = new MybbStuff\SimpleLikes\LikeManager($mybb, $db, $lang);
+            $likeSystem = new MybbStuff_SimpleLikes_LikeManager($mybb, $db, $lang);
         } catch (InvalidArgumentException $e) {
             xmlhttp_error($e->getMessage());
         }
