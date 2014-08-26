@@ -14,11 +14,16 @@ defined(
     'IN_MYBB'
 ) or die('Direct initialization of this file is not allowed.<br /><br />Please make sure IN_MYBB is defined.');
 
-define('SIMPLELIKES_PLUGIN_PATH', MYBB_ROOT . 'inc/plugins/MybbStuff/SimpleLikes/');
+defined('MYBBSTUFF_CORE_PATH') or define('MYBBSTUFF_CORE_PATH', MYBB_ROOT . 'inc/plugins/MybbStuff/Core/');
+define('SIMPLELIKES_PLUGIN_PATH', MYBB_ROOT . 'inc/plugins/MybbStuff/SimpleLikes');
 
 defined('PLUGINLIBRARY') or define('PLUGINLIBRARY', MYBB_ROOT . 'inc/plugins/pluginlibrary.php');
 
-require_once SIMPLELIKES_PLUGIN_PATH . 'vendor/autoload.php';
+require_once MYBBSTUFF_CORE_PATH . 'ClassLoader.php';
+
+$classLoader = new MybbStuff_Core_ClassLoader();
+$classLoader->registerNamespace('MybbStuff_SimpleLikes', array(SIMPLELIKES_PLUGIN_PATH));
+$classLoader->register();
 
 $importManager = MybbStuff_SimpleLikes_Import_Manager::getInstance();
 $importManager->addImporter('MybbStuff_SimpleLikes_Import_ThankYouLikeImporter');
@@ -196,8 +201,8 @@ function simplelikes_activate()
     $db->insert_query('settings', $insertArray);
     rebuild_settings();
 
-    if (is_dir(SIMPLELIKES_PLUGIN_PATH . 'templates')) {
-        $dir       = new DirectoryIterator(SIMPLELIKES_PLUGIN_PATH . 'templates');
+    if (is_dir(SIMPLELIKES_PLUGIN_PATH . '/templates')) {
+        $dir       = new DirectoryIterator(SIMPLELIKES_PLUGIN_PATH . '/templates');
         $templates = array();
         foreach ($dir as $file) {
             if (!$file->isDot() AND !$file->isDir() AND pathinfo($file->getFilename(), PATHINFO_EXTENSION) == 'html') {
@@ -746,7 +751,7 @@ function simplelikesAjax()
         }
 
         try {
-            $likeSystem = new MybbStuff\SimpleLikes\LikeManager($mybb, $db, $lang);
+            $likeSystem = new MybbStuff_SimpleLikes_LikeManager($mybb, $db, $lang);
         } catch (InvalidArgumentException $e) {
             xmlhttp_error($e->getMessage());
 
