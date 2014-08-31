@@ -6,7 +6,7 @@
  * @package Simple Likes
  * @author  Euan T. <euan@euantor.com>
  * @license http://opensource.org/licenses/mit-license.php MIT license
- * @version 1.4.0
+ * @version 1.5.0
  */
 class MybbStuff_SimpleLikes_Import_Manager
 {
