@@ -22,7 +22,7 @@ defined('PLUGINLIBRARY') or define('PLUGINLIBRARY', MYBB_ROOT . 'inc/plugins/plu
 require_once MYBBSTUFF_CORE_PATH . 'ClassLoader.php';
 
 $classLoader = new MybbStuff_Core_ClassLoader();
-$classLoader->registerNamespace('MybbStuff_SimpleLikes', array(SIMPLELIKES_PLUGIN_PATH));
+$classLoader->registerNamespace('MybbStuff_SimpleLikes', array(SIMPLELIKES_PLUGIN_PATH . '/src'));
 $classLoader->register();
 
 $importManager = MybbStuff_SimpleLikes_Import_Manager::getInstance();
@@ -54,17 +54,18 @@ function simplelikes_install()
     );
     $cache->update('euantor_plugins', $euantor_plugins);
 
-    if (!$db->table_exists('post_likes')) {
-        $collation = $db->build_create_table_collation();
-        $db->write_query(
-            "
-            CREATE TABLE " . TABLE_PREFIX . "post_likes(
-				id INT(10) NOT NULL AUTO_INCREMENT,
-				post_id INT(10) unsigned NOT NULL,
-				user_id INT(10) unsigned NOT NULL,
-				PRIMARY KEY (id)
-			) ENGINE=InnoDB{$collation};"
-        );
+    if (is_dir(SIMPLELIKES_PLUGIN_PATH . '/database/tables')) {
+        $dir       = new DirectoryIterator(SIMPLELIKES_PLUGIN_PATH . '/database/tables');
+        foreach ($dir as $file) {
+            if (!$file->isDot() AND !$file->isDir() AND pathinfo($file->getFilename(), PATHINFO_EXTENSION) == 'sql') {
+                $createTableQueryString = str_replace(
+                    array('{PREFIX}', '{COLLATION}'),
+                    array(TABLE_PREFIX, $db->build_create_table_collation()),
+                    file_get_contents($file->getPathName()));
+
+                $db->write_query($createTableQueryString);
+            }
+        }
     }
 
     if ($db->table_exists('alert_settings')) {
