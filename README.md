@@ -5,7 +5,8 @@ Simple Like System is a [MyAlerts](https://github.com/euantorano/MyAlerts) integ
 
 ##Dependencies
 
-SimpleLike System relies on [Plugin Library](http://mods.mybb.com/view/pluginlibrary) to function.
+* SimpleLike System relies on [Plugin Library](http://mods.mybb.com/view/pluginlibrary) to function.
+* SimpleLikes utilises [MyBBStuff's Plugins.Core](https://github.com/MyBBStuff/Plugins.Core) library to provide essential tools.
 
 ##Support
 

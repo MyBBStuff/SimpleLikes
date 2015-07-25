@@ -1,8 +1,13 @@
 <tr>
-	<td class="trow1">
-		<div class="liker_avatar"><img src="{$like['avatar']}" alt="" width="48" height="48"/></div>
+	<td class="{$altbg}" width="15%">
+		<img src="{$like['avatar']['image']}" alt="" {$like['avatar']['width_height']} />
+	</td>
+	<td class="{$altbg}" align="left">
 		<div class="liker_details">
 			{$like['profile_link']}
 		</div>
+	</td>
+	<td class="{$altbg}">
+		{$like['created_at']}
 	</td>
 </tr>
