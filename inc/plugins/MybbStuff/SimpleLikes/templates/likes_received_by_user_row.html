@@ -5,11 +5,10 @@
 		</strong>
 	</td>
 	<td class="{$altbg}">
-		<strong>
-			{$lang->simplelikes_num_likes}
-		</strong>
-		&nbsp;
 		<a href="#"
-		   onclick="MyBB.popupWindow('{$mybb->settings['bburl']}/misc.php?action=post_likes&amp;post_id={$like['post_id']}', 'buddyList', 350, 350);">{$like['count']}</a>
+		   onclick="MyBB.popupWindow('/misc.php?action=post_likes&amp;post_id={$like['post_id']}', 'postLikes', 350, 350); return false;">{$like['count']}</a>
+	</td>
+	<td class="{$altbg}">
+		{$like['created_at']}
 	</td>
 </tr>
