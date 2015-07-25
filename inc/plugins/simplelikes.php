@@ -115,6 +115,7 @@ function simplelikes_uninstall()
 
 	$PL->settings_delete('simplelikes', true);
 	$PL->templates_delete('simplelikes');
+	$PL->stylesheet_delete('simplelikes.css');
 
 	if ($db->field_exists('simplelikes_can_like', 'usergroups')) {
 		$db->drop_column('usergroups', 'simplelikes_can_like');
@@ -183,9 +184,20 @@ function simplelikes_activate()
 				'description' => 'Do you wish to get how many likes a user has received in the postbit? Beware that this adds an extra query.',
 				'value'       => '0',
 			],
+			'likes_per_page' => [
+				'title' => 'Likes per page',
+				'description' => 'The number of likes to show per page',
+				'value' => 1,
+				'optionscode' => 'numeric',
+			],
 		],
 		false
 	);
+
+	$stylesheet = file_get_contents(
+		SIMPLELIKES_PLUGIN_PATH . '/stylesheets/simplelikes.css'
+	);
+	$PL->stylesheet('simplelikes.css', $stylesheet, 'showthread.php');
 
 	if (is_dir(SIMPLELIKES_PLUGIN_PATH . '/templates')) {
 		$dir = new DirectoryIterator(SIMPLELIKES_PLUGIN_PATH . '/templates');
@@ -458,7 +470,7 @@ function simplelikesPostbit(&$post)
 $plugins->add_hook('member_profile_end', 'simplelikesProfile');
 function simplelikesProfile()
 {
-	global $db, $lang, $memprofile, $templates, $postsLiked, $likesReceived;
+	global $mybb, $db, $lang, $memprofile, $templates, $postsLiked, $likesReceived;
 
 	if (!isset($lang->simplelikes)) {
 		$lang->load('simplelikes');
@@ -621,7 +633,8 @@ function simplelikesMisc()
 			);
 
 			$page = $mybb->get_input('page', MyBB::INPUT_INT);
-			$pages = $count / 20;
+			$perPage = $mybb->settings['simplelikes_likes_per_page'];
+			$pages = $count / $perPage;
 			$pages = ceil($pages);
 			if ($mybb->input['page'] == "last") {
 				$page = $pages;
@@ -632,12 +645,12 @@ function simplelikesMisc()
 			}
 
 			if ($page AND $page > 0) {
-				$start = ($page - 1) * 20;
+				$start = ($page - 1) * $perPage;
 			} else {
 				$start = 0;
 				$page = 1;
 			}
-			$multipage = multipage($count, 20, $page, "misc.php?action=post_likes_by_user&user_id={$userId}", true);
+			$multipage = multipage($count, $perPage, $page, "misc.php?action=post_likes_by_user&user_id={$userId}");
 
 			$lang->simplelikes_likes_by_user = $lang->sprintf(
 				$lang->simplelikes_likes_by_user,
@@ -647,7 +660,7 @@ function simplelikesMisc()
 			add_breadcrumb($lang->simplelikes_likes_by_user, "misc.php?action=post_likes_by_user&user_id={$userId}");
 
 			$likes = '';
-			$queryString = "SELECT * FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE l.user_id = {$userId} ORDER BY l.id DESC LIMIT {$start}, 20";
+			$queryString = "SELECT * FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE l.user_id = {$userId} ORDER BY l.id DESC LIMIT {$start}, {$perPage}";
 			$query = $db->query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
 			while ($like = $db->fetch_array($query)) {
 				$altbg = alt_trow();
@@ -694,7 +707,8 @@ function simplelikesMisc()
 				}
 
 				$page = $mybb->get_input('page', MyBB::INPUT_INT);
-				$pages = $count / 20;
+				$perPage = $mybb->settings['simplelikes_likes_per_page'];
+				$pages = $count / $perPage;
 				$pages = ceil($pages);
 				if ($mybb->get_input('page') == "last") {
 					$page = $pages;
@@ -705,19 +719,18 @@ function simplelikesMisc()
 				}
 
 				if ($page AND $page > 0) {
-					$start = ($page - 1) * 20;
+					$start = ($page - 1) * $perPage;
 				} else {
 					$start = 0;
 					$page = 1;
 				}
 				$multipage = multipage(
 					$count,
-					20,
+					$perPage,
 					$page,
-					"misc.php?action=post_likes_received_by_user&user_id={$userId}",
-					true
+					"misc.php?action=post_likes_received_by_user&user_id={$userId}"
 				);
-
+				
 				$lang->simplelikes_likes_received_by_user = $lang->sprintf(
 					$lang->simplelikes_likes_received_by_user,
 					htmlspecialchars_uni($user['username'])
@@ -729,7 +742,7 @@ function simplelikesMisc()
 				);
 
 				$likes = '';
-				$queryString = "SELECT *, COUNT(id) AS count FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.uid = {$userId} GROUP BY p.pid ORDER BY l.id DESC LIMIT {$start}, 20";
+				$queryString = "SELECT *, COUNT(id) AS count FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.uid = {$userId} GROUP BY p.pid ORDER BY l.id DESC LIMIT {$start}, {$perPage}";
 				$query = $db->query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
 				while ($like = $db->fetch_array($query)) {
 					$altbg = alt_trow();
@@ -808,6 +821,10 @@ function simplelikesAjax()
 
 		$result = $likeSystem->likePost($postId);
 
+		if ($result === MybbStuff_SimpleLikes_LikeManager::RESULT_LIKED) {
+			$buttonText = $lang->simplelikes_unlike;
+		}
+
 		if ((int)$post['uid'] !== (int)$mybb->user['uid']) {
 			if (function_exists('myalerts_is_activated') && myalerts_is_activated()) {
 				global $cache, $plugins;
@@ -829,7 +846,7 @@ function simplelikesAjax()
 							$alertTypeManager);
 					}
 
-					if ($result == 0) {
+					if ($result === MybbStuff_SimpleLikes_LikeManager::RESULT_UNLIKED) {
 						$query = $db->simple_select(
 							'alerts',
 							'id',

@@ -27,6 +27,10 @@ class MybbStuff_SimpleLikes_LikeManager
 	 */
 	private $lang;
 
+	const RESULT_LIKED = 1;
+
+	const RESULT_UNLIKED = 0;
+
 	/**
 	 * Create a new Likes object.
 	 *
@@ -66,7 +70,7 @@ class MybbStuff_SimpleLikes_LikeManager
 		if ($this->db->num_rows($query) > 0) {
 			$this->db->delete_query('post_likes', "post_id = {$postId} AND user_id = {$userId}", 1);
 
-			return 0;
+			return static::RESULT_UNLIKED;
 		} else {
 			$insertArray = [
 				'post_id'    => $postId,
@@ -74,7 +78,9 @@ class MybbStuff_SimpleLikes_LikeManager
 				'created_at' => $this->db->escape_string($timestamp),
 			];
 
-			return $this->db->insert_query('post_likes', $insertArray);
+			$this->db->insert_query('post_likes', $insertArray);
+
+			return static::RESULT_LIKED;
 		}
 	}
 
@@ -156,7 +162,7 @@ class MybbStuff_SimpleLikes_LikeManager
 			$sep = (count($likeArray) == 2) ? ' ' . strtolower($this->lang->simplelikes_and) . ' ' : ', ';
 			$likeString = implode($sep, $likeArray);
 			if (!empty($postLikes[(int)$post['pid']])) {
-				$likeString .= ' ' . $this->lang->simplelikes_and . ' <a href="#pid' . $post['pid'] . '" onclick="MyBB.popupWindow(\'/misc.php?action=post_likes&amp;post_id=' . $post['pid'] . '\', \'postLikes\', 350, 350); return false;">' . (int)count(
+				$likeString .= ' ' . $this->lang->simplelikes_and . ' <a href="#pid' . $post['pid'] . '" onclick="MyBB.popupWindow(\'/misc.php?action=post_likes&amp;post_id=' . $post['pid'] . '\', null, true); return false;">' . (int)count(
 						$postLikes[(int)$post['pid']]
 					) . ' ' . $this->lang->simplelikes_others . '</a>';
 			}
