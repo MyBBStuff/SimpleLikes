@@ -184,11 +184,17 @@ function simplelikes_activate()
 				'description' => 'Do you wish to get how many likes a user has received in the postbit? Beware that this adds an extra query.',
 				'value'       => '0',
 			],
-			'likes_per_page' => [
-				'title' => 'Likes per page',
-				'description' => 'The number of likes to show per page',
-				'value' => 1,
+			'likes_per_page'             => [
+				'title'       => 'Likes per page',
+				'description' => 'The number of likes to show per page.',
+				'value'       => 1,
 				'optionscode' => 'numeric',
+			],
+			'avatar_dimensions'          => [
+				'title'       => 'Avatar Dimensions',
+				'description' => 'The maximum avatar dimensions to use in the "who liked this" modal; width by height (e.g. 64|64).',
+				'value'       => '64|64',
+				'optionscode' => 'text',
 			],
 		],
 		false
@@ -583,13 +589,15 @@ function simplelikesMisc()
 			error($lang->simplelikes_error_no_likes);
 		}
 
+		$maxAvatarDimensions = str_replace('|', 'x', $mybb->settings['simplelikes_avatar_dimensions']);
+
 		$likes = '';
 		foreach ($likeArray as $like) {
 			$like['username'] = htmlspecialchars_uni($like['username']);
 
-			$like['avatar'] = format_avatar($like['avatar']);
+			$like['avatar'] = format_avatar($like['avatar'], $mybb->settings['simplelikes_avatar_dimensions'],
+				$maxAvatarDimensions);
 
-			$like['avatar'] = htmlspecialchars_uni($like['avatar']);
 			$like['profile_link'] = build_profile_link(
 				format_name(htmlspecialchars_uni($like['username']), $like['usergroup'], $like['displaygroup']),
 				$like['user_id']
@@ -601,12 +609,12 @@ function simplelikesMisc()
 					$createdAt->getTimestamp()) . ' ' . my_date($mybb->settings['timeformat'],
 					$createdAt->getTimestamp());
 
-			$likes .= eval($templates->render('simplelikes_likes_popup_liker'));
+			$likes .= eval($templates->render('simplelikes_likes_popup_liker', true, false));
 		}
 
 		$page = '';
-		$page = eval($templates->render('simplelikes_likes_popup'));
-		output_page($page);
+		$page = eval($templates->render('simplelikes_likes_popup', true, false));
+		echo $page;
 	} else {
 		if ($mybb->input['action'] == 'post_likes_by_user') {
 			if (!$mybb->usergroup['simplelikes_can_view_likes']) {
@@ -730,7 +738,7 @@ function simplelikesMisc()
 					$page,
 					"misc.php?action=post_likes_received_by_user&user_id={$userId}"
 				);
-				
+
 				$lang->simplelikes_likes_received_by_user = $lang->sprintf(
 					$lang->simplelikes_likes_received_by_user,
 					htmlspecialchars_uni($user['username'])

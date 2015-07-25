@@ -12,24 +12,20 @@
  */
 class MybbStuff_SimpleLikes_LikeManager
 {
+	const RESULT_LIKED = 1;
+	const RESULT_UNLIKED = 0;
 	/**
 	 * @var DB_Base $db
 	 */
 	private $db;
-
 	/**
 	 * @var MyBB $mybb
 	 */
 	private $mybb;
-
 	/**
 	 * @var MyLanguage $lang
 	 */
 	private $lang;
-
-	const RESULT_LIKED = 1;
-
-	const RESULT_UNLIKED = 0;
 
 	/**
 	 * Create a new Likes object.
@@ -162,7 +158,7 @@ class MybbStuff_SimpleLikes_LikeManager
 			$sep = (count($likeArray) == 2) ? ' ' . strtolower($this->lang->simplelikes_and) . ' ' : ', ';
 			$likeString = implode($sep, $likeArray);
 			if (!empty($postLikes[(int)$post['pid']])) {
-				$likeString .= ' ' . $this->lang->simplelikes_and . ' <a href="#pid' . $post['pid'] . '" onclick="MyBB.popupWindow(\'/misc.php?action=post_likes&amp;post_id=' . $post['pid'] . '\', null, true); return false;">' . (int)count(
+				$likeString .= ' ' . $this->lang->simplelikes_and . ' <a href="#pid' . $post['pid'] . '" onclick="MyBB.popupWindow(\'/misc.php?action=post_likes&amp;post_id=' . $post['pid'] . '\', null, false); return false;">' . (int)count(
 						$postLikes[(int)$post['pid']]
 					) . ' ' . $this->lang->simplelikes_others . '</a>';
 			}
