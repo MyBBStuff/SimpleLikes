@@ -68,8 +68,6 @@ function simplelikes_install()
 		}
 	}
 
-	simplelikesInstallMyAlerts();
-
 	if (!$db->field_exists('simplelikes_can_like', 'usergroups')) {
 		$db->add_column('usergroups', 'simplelikes_can_like', "INT(1) NOT NULL DEFAULT '0'");
 	}
@@ -110,9 +108,7 @@ function simplelikes_uninstall()
 	if ($db->table_exists('post_likes')) {
 		$db->drop_table('post_likes');
 	}
-
-	simpleLikesUninstallMyAlerts();
-
+	
 	$PL->settings_delete('simplelikes', true);
 	$PL->templates_delete('simplelikes');
 	$PL->stylesheet_delete('simplelikes.css');
@@ -263,6 +259,8 @@ HTML;
 		"#" . preg_quote('{$referrals}') . "#i",
 		'{$postsLiked}' . "\n" . '{$likesReceived}' . "\n" . '{$referrals}'
 	);
+
+	simplelikesInstallMyAlerts();
 }
 
 function simplelikes_deactivate()
@@ -293,6 +291,8 @@ HTML;
 		"#" . preg_quote('{$postsLiked}' . "\n" . '{$likesReceived}') . "#i",
 		''
 	);
+
+	simpleLikesUninstallMyAlerts();
 }
 
 function simplelikesInstallMyAlerts()
