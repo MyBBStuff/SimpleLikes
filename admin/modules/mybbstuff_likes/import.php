@@ -19,6 +19,8 @@ if (!isset($lang->simplelikes)) {
 	$lang->load('simplelikes');
 }
 
+require_once MYBB_ROOT . '/inc/plugins/MybbStuff/SimpleLikes/src/Import/Manager.php';
+
 $importManager = MybbStuff_SimpleLikes_Import_Manager::getInstance();
 
 if (!isset($mybb->input['id'])) {
