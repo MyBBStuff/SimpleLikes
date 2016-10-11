@@ -18,7 +18,7 @@ class MybbStuff_SimpleLikes_Import_Manager
 	private static $instance;
 
 	/**
-	 * @var DB_MySQLi $db
+	 * @var DB_Base $db
 	 */
 	private $db;
 
@@ -27,7 +27,7 @@ class MybbStuff_SimpleLikes_Import_Manager
 	 */
 	private $importers;
 
-	private function __construct(\DB_MySQLi $db)
+	private function __construct(\DB_Base $db)
 	{
 		$this->db = $db;
 		$this->importers = [];
