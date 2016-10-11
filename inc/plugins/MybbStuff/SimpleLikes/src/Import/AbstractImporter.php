@@ -11,11 +11,11 @@
 abstract class MybbStuff_SimpleLikes_Import_AbstractImporter
 {
 	/**
-	 * @var \DB_MySQLi $db
+	 * @var \DB_Base $db
 	 */
 	protected $db;
 
-	public function __construct(\DB_MySQLi $db)
+	public function __construct(\DB_Base $db)
 	{
 		$this->db = $db;
 	}
