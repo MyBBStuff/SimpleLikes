@@ -635,6 +635,17 @@ function simplelikesMisc()
 			$userId = $mybb->get_input('user_id', MyBB::INPUT_INT);
 			$user = get_user($userId);
 
+			require_once MYBB_ROOT . 'inc/functions_search.php';
+			$where_sql = '';
+			$unsearchforums = get_unsearchable_forums();
+			if ($unsearchforums) {
+				$where_sql .= " AND p.fid NOT IN ({$unsearchforums})";
+			}
+			$inactiveforums = get_inactive_forums();
+			if ($inactiveforums) {
+				$where_sql .= " AND p.fid NOT IN ({$inactiveforums})";
+			}
+
 			$count = (int)$db->fetch_field(
 				$db->simple_select('post_likes', 'COUNT(*) AS count', "user_id = {$userId}"),
 				'count'
@@ -668,7 +679,7 @@ function simplelikesMisc()
 			add_breadcrumb($lang->simplelikes_likes_by_user, "misc.php?action=post_likes_by_user&user_id={$userId}");
 
 			$likes = '';
-			$queryString = "SELECT * FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE l.user_id = {$userId} ORDER BY l.id DESC LIMIT {$start}, {$perPage}";
+			$queryString = "SELECT * FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE l.user_id = {$userId}{$where_sql} ORDER BY l.id DESC LIMIT {$start}, {$perPage}";
 			$query = $db->query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
 			while ($like = $db->fetch_array($query)) {
 				$altbg = alt_trow();
@@ -706,7 +717,18 @@ function simplelikesMisc()
 				$userId = $mybb->get_input('user_id', MyBB::INPUT_INT);
 				$user = get_user($userId);
 
-				$queryString = "SELECT COUNT(*) AS count FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.uid = {$userId} GROUP BY p.pid";
+				require_once MYBB_ROOT . 'inc/functions_search.php';
+				$where_sql = '';
+				$unsearchforums = get_unsearchable_forums();
+				if ($unsearchforums) {
+					$where_sql .= " AND p.fid NOT IN ({$unsearchforums})";
+				}
+				$inactiveforums = get_inactive_forums();
+				if ($inactiveforums) {
+					$where_sql .= " AND p.fid NOT IN ({$inactiveforums})";
+				}
+
+				$queryString = "SELECT COUNT(*) AS count FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.uid = {$userId}{$where_sql} GROUP BY p.pid";
 				$query = $db->query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
 				$count = 0;
 
@@ -750,7 +772,7 @@ function simplelikesMisc()
 				);
 
 				$likes = '';
-				$queryString = "SELECT *, COUNT(id) AS count FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.uid = {$userId} GROUP BY p.pid ORDER BY l.id DESC LIMIT {$start}, {$perPage}";
+				$queryString = "SELECT *, COUNT(id) AS count FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.uid = {$userId}{$where_sql} GROUP BY p.pid ORDER BY l.id DESC LIMIT {$start}, {$perPage}";
 				$query = $db->query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
 				while ($like = $db->fetch_array($query)) {
 					$altbg = alt_trow();
