@@ -158,9 +158,8 @@ class MybbStuff_SimpleLikes_LikeManager
 			$sep = (count($likeArray) == 2) ? ' ' . strtolower($this->lang->simplelikes_and) . ' ' : ', ';
 			$likeString = implode($sep, $likeArray);
 			if (!empty($postLikes[(int)$post['pid']])) {
-				$likeString .= ' ' . $this->lang->simplelikes_and . ' <a href="#pid' . $post['pid'] . '" onclick="MyBB.popupWindow(\'/misc.php?action=post_likes&amp;post_id=' . $post['pid'] . '\', null, false); return false;">' . (int)count(
-						$postLikes[(int)$post['pid']]
-					) . ' ' . $this->lang->simplelikes_others . '</a>';
+				$count = my_number_format(count($postLikes[(int)$post['pid']]));
+				$likeString .= ' ' . $this->lang->simplelikes_and . ' <a href="#pid' . $post['pid'] . '" onclick="MyBB.popupWindow(\'/misc.php?action=post_likes&amp;post_id=' . $post['pid'] . '\', null, false); return false;">' . $count . ' ' . $this->lang->simplelikes_others . '</a>';
 			}
 			$likeString .= ' ' . $likePhrase . ' ' . $this->lang->simplelikes_this_post;
 		}

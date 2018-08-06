@@ -486,13 +486,13 @@ function simplelikesProfile()
 
 	// Number of likes user has made
 	$query = $db->simple_select('post_likes', 'COUNT(id) AS count', 'user_id = ' . $uid);
-	$usersLikes = (int)$db->fetch_field($query, 'count');
+	$usersLikes = my_number_format((int)$db->fetch_field($query, 'count'));
 	$postsLiked = eval($templates->render('simplelikes_profile_total_likes'));
 
 	// Number of likes user's posts have
 	$queryString = "SELECT COUNT(l.id) AS count FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.uid = {$uid}";
 	$query = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
-	$postLikes = (int)$db->fetch_field($query, 'count');
+	$postLikes = my_number_format((int)$db->fetch_field($query, 'count'));
 	$likesReceived = eval($templates->render('simplelikes_profile_likes_received'));
 }
 
@@ -778,7 +778,7 @@ function simplelikesMisc()
 					$altbg = alt_trow();
 					$like['postlink'] = get_post_link((int)$like['post_id']) . '#pid' . (int)$like['post_id'];
 					$like['subject'] = htmlspecialchars_uni($like['subject']);
-					$like['count'] = (int)$like['count'];
+					$like['count'] = my_number_format((int)$like['count']);
 
 					$createdAt = new DateTime($like['created_at']);
 
