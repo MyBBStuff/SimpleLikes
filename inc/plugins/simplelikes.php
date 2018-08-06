@@ -593,7 +593,7 @@ function simplelikesMisc()
 
 		$likes = '';
 		foreach ($likeArray as $like) {
-            $altbg = alt_trow();
+			$altbg = alt_trow();
 			$like['username'] = htmlspecialchars_uni($like['username']);
 
 			$like['avatar'] = format_avatar($like['avatar'], $mybb->settings['simplelikes_avatar_dimensions'],
