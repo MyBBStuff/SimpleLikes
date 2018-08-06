@@ -11,7 +11,7 @@ $l['simplelikes_unlike'] = 'Unlike';
 $l['simplelikes_you'] = 'You';
 $l['simplelikes_like_singular'] = 'like';
 $l['simplelikes_like_plural'] = 'likes';
-$l['simplelikes_and'] = 'And';
+$l['simplelikes_and'] = 'and';
 $l['simplelikes_others'] = 'others';
 $l['simplelikes_this_post'] = 'this post';
 
