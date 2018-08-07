@@ -466,7 +466,7 @@ function simplelikesPostbit(&$post)
 		}
 
 		if (array_key_exists((int)$post['uid'], $postLikesReceived)) {
-			$post['likes_received'] = $postLikesReceived[(int)$post['uid']];
+			$post['likes_received'] = my_number_format($postLikesReceived[(int)$post['uid']]);
 		} else {
 			$post['likes_received'] = 0;
 		}
