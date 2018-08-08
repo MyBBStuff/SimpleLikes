@@ -1,22 +1,25 @@
-<table width="100%" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" border="0" align="center"
-       class="tborder">
-	<thead>
-	<tr>
-		<th class="thead" colspan="3">
-			<strong>Users who liked this post</strong>
-		</th>
-	</tr>
-	<tr>
-		<td class="tcat" colspan="2">
-			<strong>{$lang->simplelikes_user}</strong>
-		</td>
-		<td class="tcat" width="20%">
-			<strong>{$lang->simplelikes_liked_at}</strong>
-		</td>
-	</tr>
-	</thead>
-	<tbody>
-	{$likes}
-	</tbody>
-</table>
-
+<div class="modal">
+	<div style="overflow-y: auto; max-height: 400px;">
+		<table width="100%" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" border="0" align="center"
+			class="tborder">
+			<thead>
+			<tr>
+				<th class="thead" colspan="3">
+					<strong>Users who liked this post</strong>
+				</th>
+			</tr>
+			<tr>
+				<td class="tcat" colspan="2">
+					<strong>{$lang->simplelikes_user}</strong>
+				</td>
+				<td class="tcat" width="20%">
+					<strong>{$lang->simplelikes_liked_at}</strong>
+				</td>
+			</tr>
+			</thead>
+			<tbody>
+			{$likes}
+			</tbody>
+		</table>
+	</div>
+</div>
