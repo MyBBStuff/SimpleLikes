@@ -876,10 +876,14 @@ function simplelikesAjax()
 						$query = $db->simple_select(
 							'alerts',
 							'id',
-							"alert_type_id = '{$alertType->getId()}' AND object_id = {$postId} AND uid = " . (int)$mybb->user['uid']
+							"alert_type_id = '{$alertType->getId()}' AND object_id = {$postId} AND from_user_id = " . (int)$mybb->user['uid']
 						);
-						$alertId = $db->fetch_field($query, 'id');
-						$alertManager->deleteAlerts([$alertId]);
+						$alertIds = [];
+						while ($id = $db->fetch_field($query, 'id')) {
+							$alertIds[] = (int)$id;
+						}
+						$alerts = implode(',', $alertIds);
+						$db->delete_query('alerts', 'id IN (' . $alerts . ')');
 					} else {
 						$alert = new MybbStuff_MyAlerts_Entity_Alert($post['uid'], $alertType, $post['pid']);
 						$alert->setExtraDetails([
