@@ -160,9 +160,13 @@ class MybbStuff_SimpleLikes_LikeManager
 				$count = my_number_format(count($postLikes[(int)$post['pid']]));
 				$likeString = $this->lang->sprintf($this->lang->simplelikes_like_others, $likeList, $count, $likePhrase, $post['pid']);
 			} else {
-				$last = array_pop($likeArray);
-				$likeList = implode($this->lang->comma, $likeArray);
-				$likeList .= ' ' . $this->lang->simplelikes_and . ' ' . $last;
+				if (count($likeArray) > 1) {
+					$last = array_pop($likeArray);
+					$likeList = implode($this->lang->comma, $likeArray);
+					$likeList .= ' ' . $this->lang->simplelikes_and . ' ' . $last;
+				} else {
+					$likeList = $likeArray[0];
+				}
 				$likeString = $this->lang->sprintf($this->lang->simplelikes_like_normal, $likeList, $likePhrase);
 			}
 		}
