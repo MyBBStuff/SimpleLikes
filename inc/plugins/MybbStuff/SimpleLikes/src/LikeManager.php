@@ -155,17 +155,16 @@ class MybbStuff_SimpleLikes_LikeManager
 			} else {
 				$likePhrase = $this->lang->simplelikes_like_singular;
 			}
-			$sep = (count($likeArray) == 2) ? ' ' . strtolower($this->lang->simplelikes_and) . ' ' : ', ';
-			$likeString = implode($sep, $likeArray);
 			if (!empty($postLikes[(int)$post['pid']])) {
+				$likeList = implode($this->lang->comma, $likeArray);
 				$count = my_number_format(count($postLikes[(int)$post['pid']]));
-				$countString = $count . ' ' . $this->lang->simplelikes_others;
-				if ($this->mybb->usergroup['simplelikes_can_view_likes'] == 1) {
-					$countString = '<a href="#pid' . $post['pid'] . '" onclick="MyBB.popupWindow(\'/misc.php?action=post_likes&amp;post_id=' . $post['pid'] . '\', null, false); return false;">' . $countString . '</a>';
-				}
-				$likeString .= ' ' . $this->lang->simplelikes_and . ' ' . $countString;
+				$likeString = $this->lang->sprintf($this->lang->simplelikes_like_others, $likeList, $count, $likePhrase, $post['pid']);
+			} else {
+				$last = array_pop($likeArray);
+				$likeList = implode($this->lang->comma, $likeArray);
+				$likeList .= ' ' . $this->lang->simplelikes_and . ' ' . $last;
+				$likeString = $this->lang->sprintf($this->lang->simplelikes_like_normal, $likeList, $likePhrase);
 			}
-			$likeString .= ' ' . $likePhrase . ' ' . $this->lang->simplelikes_this_post;
 		}
 
 		return $likeString;

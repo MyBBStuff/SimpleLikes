@@ -12,8 +12,10 @@ $l['simplelikes_you'] = 'You';
 $l['simplelikes_like_singular'] = 'like';
 $l['simplelikes_like_plural'] = 'likes';
 $l['simplelikes_and'] = 'and';
-$l['simplelikes_others'] = 'others';
-$l['simplelikes_this_post'] = 'this post';
+//$l['simplelikes_others'] = 'others';
+//$l['simplelikes_this_post'] = 'this post';
+$l['simplelikes_like_normal'] = '{1} {2} this post';
+$l['simplelikes_like_others'] = '{1} and <a href="#pid{4}" onclick="MyBB.popupWindow(\'/misc.php?action=post_likes&amp;post_id={4}\', null, false); return false;">{2} others {3}</a> this post';
 
 $l['simplelikes_error_no_likes'] = 'Nobody has liked this post yet.';
 $l['simplelikes_error_post_id'] = 'No post ID provided';
