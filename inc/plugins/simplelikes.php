@@ -466,7 +466,7 @@ function simplelikesPostbit(&$post)
 		}
 
 		if (array_key_exists((int)$post['uid'], $postLikesReceived)) {
-			$post['likes_received'] = $postLikesReceived[(int)$post['uid']];
+			$post['likes_received'] = my_number_format($postLikesReceived[(int)$post['uid']]);
 		} else {
 			$post['likes_received'] = 0;
 		}
@@ -593,6 +593,7 @@ function simplelikesMisc()
 
 		$likes = '';
 		foreach ($likeArray as $like) {
+			$altbg = alt_trow();
 			$like['username'] = htmlspecialchars_uni($like['username']);
 
 			$like['avatar'] = format_avatar($like['avatar'], $mybb->settings['simplelikes_avatar_dimensions'],
@@ -646,10 +647,9 @@ function simplelikesMisc()
 				$where_sql .= " AND p.fid NOT IN ({$inactiveforums})";
 			}
 
-			$count = (int)$db->fetch_field(
-				$db->simple_select('post_likes', 'COUNT(*) AS count', "user_id = {$userId}"),
-				'count'
-			);
+			$queryString = "SELECT COUNT(*) AS count FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE l.user_id = {$userId}{$where_sql}";
+			$query = $db->query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
+			$count = $db->fetch_field($query, 'count');
 
 			$page = $mybb->get_input('page', MyBB::INPUT_INT);
 			$perPage = $mybb->settings['simplelikes_likes_per_page'];
@@ -730,11 +730,7 @@ function simplelikesMisc()
 
 				$queryString = "SELECT COUNT(*) AS count FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.uid = {$userId}{$where_sql} GROUP BY p.pid";
 				$query = $db->query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
-				$count = 0;
-
-				while ($row = $db->fetch_array($query)) {
-					$count += (int)$row['count'];
-				}
+				$count = $db->num_rows($query);
 
 				$page = $mybb->get_input('page', MyBB::INPUT_INT);
 				$perPage = $mybb->settings['simplelikes_likes_per_page'];
