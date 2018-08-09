@@ -875,7 +875,7 @@ function simplelikesAjax()
 					if ($result === MybbStuff_SimpleLikes_LikeManager::RESULT_UNLIKED) {
 						$db->delete_query(
 							'alerts',
-							"alert_type_id = '{$alertType->getId()}' AND object_id = {$postId} AND from_user_id" . (int)$mybb->user['uid']
+							"alert_type_id = '{$alertType->getId()}' AND object_id = {$postId} AND from_user_id = " . (int)$mybb->user['uid']
 						);
 					} else {
 						$alert = new MybbStuff_MyAlerts_Entity_Alert($post['uid'], $alertType, $post['pid']);
