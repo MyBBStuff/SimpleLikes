@@ -873,13 +873,10 @@ function simplelikesAjax()
 					}
 
 					if ($result === MybbStuff_SimpleLikes_LikeManager::RESULT_UNLIKED) {
-						$query = $db->simple_select(
+						$db->delete_query(
 							'alerts',
-							'id',
-							"alert_type_id = '{$alertType->getId()}' AND object_id = {$postId} AND uid = " . (int)$mybb->user['uid']
+							"alert_type_id = '{$alertType->getId()}' AND object_id = {$postId} AND from_user_id = " . (int)$mybb->user['uid']
 						);
-						$alertId = $db->fetch_field($query, 'id');
-						$alertManager->deleteAlerts([$alertId]);
 					} else {
 						$alert = new MybbStuff_MyAlerts_Entity_Alert($post['uid'], $alertType, $post['pid']);
 						$alert->setExtraDetails([
