@@ -35,11 +35,20 @@ class MybbStuff_SimpleLikes_LikeFormatter extends MybbStuff_MyAlerts_Formatter_A
 		MybbStuff_MyAlerts_Entity_Alert $alert,
 		array $outputAlert
 	) {
-		return $this->lang->sprintf(
-			$this->lang->simplelikes_alert,
-			$outputAlert['from_user_profilelink'],
-			$this->buildShowLink($alert)
-		);
+		$alertContent = $alert->getExtraDetails();
+		if (isset($alertContent['subject'])) {
+			$message = $this->lang->sprintf(
+				$this->lang->simplelikes_alert,
+				$outputAlert['from_user'],
+				htmlspecialchars_uni($alertContent['subject'])
+			);
+		} else {
+			$message = $this->lang->sprintf(
+				$this->lang->simplelikes_alert_fallback,
+				$outputAlert['from_user']
+			);
+		}
+		return $message;
 	}
 
 	/**

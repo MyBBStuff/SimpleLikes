@@ -884,9 +884,8 @@ function simplelikesAjax()
 						$alert = new MybbStuff_MyAlerts_Entity_Alert($post['uid'], $alertType, $post['pid']);
 						$alert->setExtraDetails([
 							'tid' => (int)$post['tid'],
+							'subject' => $post['subject']
 						]);
-
-
 						$alertManager->addAlert($alert);
 					}
 				}
