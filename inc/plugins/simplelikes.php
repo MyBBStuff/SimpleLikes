@@ -107,6 +107,12 @@ function simplelikes_uninstall()
 
 	$PL or require_once PLUGINLIBRARY;
 
+	// Revert changes to tapatalk files
+	if (simplelikes_tapatalk_edits_revert() !== true) {
+		flash_message($lang->simplelikes_tapatalk_revert_error, 'error');
+		admin_redirect('index.php?module=config-plugins');
+	}
+
 	if ($db->table_exists('post_likes')) {
 		$db->drop_table('post_likes');
 	}
