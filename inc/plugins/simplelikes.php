@@ -951,6 +951,9 @@ function simplelikes_tapatalk_apply_revert_edits()
 {
 	global $mybb, $lang;
 	if ($mybb->input['my_post_key'] == $mybb->post_code) {
+		if (!isset($lang->simplelikes)) {
+			$lang->load('simplelikes');
+		}
 		if ($mybb->input['action'] == 'simplelikes_tapatalk_apply_changes') {
 			if (simplelikes_tapatalk_edits(true) === true) {
 				flash_message($lang->simplelikes_tapatalk_apply_success, 'success');
