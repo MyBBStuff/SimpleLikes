@@ -30,9 +30,11 @@ $importManager->addImporter('MybbStuff_SimpleLikes_Import_ThankYouLikeImporter')
 
 function simplelikes_info()
 {
+	global $lang, $plugins;
+	$plugins->run_hooks('simplelikes_info');
 	return [
 		'name'          => 'Like System',
-		'description'   => 'A simple post like system.',
+		'description'   => 'A simple post like system.' . $lang->simplelikes_tapatalk_core_edits,
 		'website'       => 'http://www.mybbstuff.com',
 		'author'        => 'euantor',
 		'authorsite'    => 'http://www.euantor.com',
@@ -917,4 +919,179 @@ function simplelikesAjax()
 			);
 		}
 	}
+}
+
+$plugins->add_hook('simplelikes_info', 'simplelikes_tapatalk_integration');
+function simplelikes_tapatalk_integration()
+{
+	global $lang, $cache, $mybb;
+	if (is_dir(MYBB_ROOT . 'mobiquo/')) {
+		if (!isset($lang->simplelikes)) {
+			$lang->load('simplelikes');
+		}
+		$lang->simplelikes_tapatalk_core_edits = '<br /><br />' . $lang->simplelikes_tapatalk_integration;
+		if (simplelikes_tapatalk_edits() !== true) {
+			$lang->simplelikes_tapatalk_core_edits .= '<a href="index.php?module=config-plugins&amp;action=simplelikes_tapatalk_apply_changes&amp;my_post_key=' . $mybb->post_code . '">' . $lang->simplelikes_tapatalk_apply_changes . '</a>';
+		} else {
+			$lang->simplelikes_tapatalk_core_edits .= '<a href="index.php?module=config-plugins&amp;action=simplelikes_tapatalk_revert_changes&amp;my_post_key=' . $mybb->post_code . '">' . $lang->simplelikes_tapatalk_revert_changes . '</a>';
+		}
+	} else {
+		$lang->simplelikes_tapatalk_core_edits = '';
+	}
+}
+
+$plugins->add_hook('admin_config_plugins_begin', 'simplelikes_tapatalk_apply_revert_edits');
+function simplelikes_tapatalk_apply_revert_edits()
+{
+	global $mybb, $lang;
+	if ($mybb->input['my_post_key'] == $mybb->post_code) {
+		if ($mybb->input['action'] == 'simplelikes_tapatalk_apply_changes') {
+			if (simplelikes_tapatalk_edits(true) === true) {
+				flash_message($lang->simplelikes_tapatalk_apply_success, 'success');
+                admin_redirect('index.php?module=config-plugins');
+			} else {
+				flash_message($lang->simplelikes_tapatalk_apply_error, 'error');
+                admin_redirect('index.php?module=config-plugins');
+			}
+		}
+
+		if ($mybb->input['action'] == 'simplelikes_tapatalk_revert_changes') {
+			if (simplelikes_tapatalk_edits_revert() === true) {
+				flash_message($lang->simplelikes_tapatalk_revert_success, 'success');
+                admin_redirect('index.php?module=config-plugins');
+			} else {
+				flash_message($lang->simplelikes_tapatalk_revert_error, 'error');
+                admin_redirect('index.php?module=config-plugins');
+			}
+		}
+	}
+}
+
+function simplelikes_tapatalk_edits($apply = false)
+{
+	global $PL;
+	$PL or require_once PLUGINLIBRARY;
+	$edits = simplelikes_tapatalk_get_edits();
+	foreach ($edits as $edit) {
+		$result = $PL->edit_core('simplelikes_tapatalk', $edit['file'], $edit['changes'], $apply);
+		if ($result !== true) {
+			return false;
+		}
+	}
+	return true;
+}
+
+function simplelikes_tapatalk_edits_revert()
+{
+	global $PL;
+	$PL or require_once PLUGINLIBRARY;
+	$edits = simplelikes_tapatalk_get_edits();
+	foreach ($edits as $edit) {
+		$result = $PL->edit_core('simplelikes_tapatalk', $edit['file'], array(), true);
+		if ($result !== true) {
+			return false;
+		}
+	}
+	return true;
+}
+
+function simplelikes_tapatalk_get_edits()
+{
+	$edits = array();
+
+	$edits[] = array(
+		'file' => 'mobiquo/env_setting.php',
+		'changes' => array(
+			'search' => array('if ($request_method && isset($server_param[$request_method]))', '{'),
+			'after' => array(
+				'// Thank you/like or simple likes?',
+				'if ($function_file_name == \'thankyoulike\' && isset($cache->cache[\'plugins\'][\'active\'][\'simplelikes\'])) {',
+				'	$function_file_name = \'simplelikes\';',
+				'	$_GET[\'post_id\'] = $mybb->input[\'post_id\'] = $request_params[0];',
+				'	$_GET[\'action\'] = $mybb->input[\'action\'] = \'like_post\';',
+				'	include dirname(__DIR__) . \'/xmlhttp.php\';',
+				'} else',
+			)
+		)
+	);
+
+	$edits[] = array(
+		'file' => 'mobiquo/include/get_thread.php',
+		'changes' => array(
+			array(
+				'search' => array('while($post = $db->fetch_array($query))', '{'),
+				'before' => array(
+					'// Simple likes get post likes',
+					'$likeSystem = new MybbStuff_SimpleLikes_LikeManager($mybb, $db, $lang);',
+					'$postLikes = $likeSystem->getLikes($pids);'
+				)
+			),
+			array(
+				'search' => array('$post_list[] = new xmlrpcval($post_xmlrpc, \'struct\')', ';'),
+				'before' => array(
+					'// add for simple likes support',
+					'if (isset($post[\'button_like\']) && $mybb->user[\'uid\']) {',
+					'	$liked = false;',
+					'	$likes_list = array();',
+					'	if ($post[\'simplelikes\'] && isset($postLikes[$post[\'pid\']])) {',
+					'		foreach ($postLikes[$post[\'pid\']] as $like) {',
+					'			if ($like[\'user_id\'] == $mybb->user[\'uid\']) {',
+					'				$liked = true;',
+					'			}',
+					'			if ($mybb->usergroup[\'simplelikes_can_view_likes\'] || $like[\'user_id\'] == $mybb->user[\'uid\']) {',
+					'				$likes_list[] = new xmlrpcval(array(',
+					'					\'userid\'    => new xmlrpcval($like[\'user_id\'], \'string\'),',
+					'					\'username\'  => new xmlrpcval(basic_clean($like[\'username\']), \'base64\')',
+					'				), \'struct\');',
+					'			}',
+					'		}',
+					'	}',
+					'	if ($post[\'button_like\']) {',
+					'		$post_xmlrpc[\'can_like\'] = new xmlrpcval(true, \'boolean\');',
+					'	}',
+					'	if ($liked) {',
+					'		$post_xmlrpc[\'is_liked\'] = new xmlrpcval(true, \'boolean\');',
+					'	}',
+					'	if ($likes_list) {',
+					'		$post_xmlrpc[\'likes_info\'] = new xmlrpcval($likes_list, \'array\');',
+					'	}',
+					'}'
+				)
+			)
+		)
+	);
+
+	$edits[] = array(
+		'file' => 'mobiquo/include/get_user_info.php',
+		'changes' => array(
+			'search' => '// thank you/like field',
+			'before' => array(
+				'// simple likes field',
+				'if (isset($cache->cache[\'plugins\'][\'active\'][\'simplelikes\'])) {',
+				'    $lang->load(\'simplelikes\');',
+				'',
+				'    $query = $db->simple_select(\'post_likes\', \'COUNT(id) AS count\', \'user_id = \' . $uid);',
+				'    $usersLikes = my_number_format((int)$db->fetch_field($query, \'count\'));',
+				'    ',
+				'    $queryString = "SELECT COUNT(l.id) AS count FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.uid = {$uid}";',
+				'    $query = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));',
+				'    $postLikes = my_number_format((int)$db->fetch_field($query, \'count\'));',
+				'',
+				'    addCustomField($lang->simplelikes_total_likes_received, $postLikes, $custom_fields_list);',
+				'    addCustomField($lang->simplelikes_total_likes, $usersLikes, $custom_fields_list);',
+				'',
+				'    $custom_fields_list_arr[] = array(',
+				'        \'name\'  => basic_clean($lang->simplelikes_total_likes_received),',
+				'        \'value\' => basic_clean($postLikes),',
+				'    );',
+				'    $custom_fields_list_arr[] = array(',
+				'        \'name\'  => basic_clean($lang->simplelikes_total_likes),',
+				'        \'value\' => basic_clean($usersLikes),',
+				'    );',
+				'}'
+			)
+		)
+	);
+
+	return $edits;
 }
