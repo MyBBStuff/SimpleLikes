@@ -948,20 +948,20 @@ function simplelikes_tapatalk_apply_revert_edits()
 		if ($mybb->input['action'] == 'simplelikes_tapatalk_apply_changes') {
 			if (simplelikes_tapatalk_edits(true) === true) {
 				flash_message($lang->simplelikes_tapatalk_apply_success, 'success');
-                admin_redirect('index.php?module=config-plugins');
+				admin_redirect('index.php?module=config-plugins');
 			} else {
 				flash_message($lang->simplelikes_tapatalk_apply_error, 'error');
-                admin_redirect('index.php?module=config-plugins');
+				admin_redirect('index.php?module=config-plugins');
 			}
 		}
 
 		if ($mybb->input['action'] == 'simplelikes_tapatalk_revert_changes') {
 			if (simplelikes_tapatalk_edits_revert() === true) {
 				flash_message($lang->simplelikes_tapatalk_revert_success, 'success');
-                admin_redirect('index.php?module=config-plugins');
+				admin_redirect('index.php?module=config-plugins');
 			} else {
 				flash_message($lang->simplelikes_tapatalk_revert_error, 'error');
-                admin_redirect('index.php?module=config-plugins');
+				admin_redirect('index.php?module=config-plugins');
 			}
 		}
 	}
