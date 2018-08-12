@@ -30,8 +30,10 @@ $importManager->addImporter('MybbStuff_SimpleLikes_Import_ThankYouLikeImporter')
 
 function simplelikes_info()
 {
-	global $lang, $plugins;
-	$plugins->run_hooks('simplelikes_info');
+	global $lang, $plugins, $cache;
+	if (isset($cache->cache['plugins']['active']['simplelikes'])) {
+		simplelikes_tapatalk_integration();
+	}
 	return [
 		'name'          => 'Like System',
 		'description'   => 'A simple post like system.' . $lang->simplelikes_tapatalk_core_edits,
@@ -927,7 +929,6 @@ function simplelikesAjax()
 	}
 }
 
-$plugins->add_hook('simplelikes_info', 'simplelikes_tapatalk_integration');
 function simplelikes_tapatalk_integration()
 {
 	global $lang, $cache, $mybb;
