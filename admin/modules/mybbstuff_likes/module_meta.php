@@ -15,7 +15,11 @@ if (!defined('IN_MYBB')) {
 
 function mybbstuff_likes_meta()
 {
-	global $page, $lang, $plugins;
+	global $page, $lang, $plugins, $cache;
+
+	if (!isset($cache->cache['plugins']['active']['simplelikes'])) {
+		return false;
+	}
 
 	if (!isset($lang->simplelikes)) {
 		$lang->load('simplelikes');
