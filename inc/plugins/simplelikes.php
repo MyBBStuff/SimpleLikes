@@ -540,7 +540,7 @@ function simplelikesGlobal()
 	}
 
 	if (THIS_SCRIPT == 'misc.php' && $mybb->input['action'] == 'post_likes') {
-		$templatelist .= 'simplelikes_likes_popup_liker,simplelikes_likes_popup';
+		$templatelist .= 'simplelikes_likes_popup_liker,simplelikes_likes_popup,simplelikes_likes_popup_nopermission';
 	}
 
 	if (THIS_SCRIPT == 'member.php' && $mybb->input['action'] == 'profile') {
@@ -574,53 +574,53 @@ function simplelikesMisc()
 	global $mybb;
 
 	if ($mybb->input['action'] == 'post_likes') {
-		if (!$mybb->usergroup['simplelikes_can_view_likes']) {
-			error_no_permission();
-		}
-
 		global $db, $templates, $theme, $headerinclude, $lang;
 
 		if (!isset($lang->simplelikes)) {
 			$lang->load('simplelikes');
 		}
 
-		if (!isset($mybb->input['post_id'])) {
-			error($lang->simplelikes_error_post_id);
-		}
+		if (!$mybb->usergroup['simplelikes_can_view_likes']) {
+			$likes = eval($templates->render('simplelikes_likes_popup_nopermission', true, false));
+		} else {
+			if (!isset($mybb->input['post_id'])) {
+				error($lang->simplelikes_error_post_id);
+			}
 
-		$pid = $mybb->get_input('post_id', MyBB::INPUT_INT);
-		$post = get_post($pid);
+			$pid = $mybb->get_input('post_id', MyBB::INPUT_INT);
+			$post = get_post($pid);
 
-		$likeSystem = new MybbStuff_SimpleLikes_LikeManager($mybb, $db, $lang);
+			$likeSystem = new MybbStuff_SimpleLikes_LikeManager($mybb, $db, $lang);
 
-		$likeArray = $likeSystem->getLikes($pid);
+			$likeArray = $likeSystem->getLikes($pid);
 
-		if (empty($likeArray)) {
-			error($lang->simplelikes_error_no_likes);
-		}
+			if (empty($likeArray)) {
+				error($lang->simplelikes_error_no_likes);
+			}
 
-		$maxAvatarDimensions = str_replace('|', 'x', $mybb->settings['simplelikes_avatar_dimensions']);
+			$maxAvatarDimensions = str_replace('|', 'x', $mybb->settings['simplelikes_avatar_dimensions']);
 
-		$likes = '';
-		foreach ($likeArray as $like) {
-			$altbg = alt_trow();
-			$like['username'] = htmlspecialchars_uni($like['username']);
+			$likes = '';
+			foreach ($likeArray as $like) {
+				$altbg = alt_trow();
+				$like['username'] = htmlspecialchars_uni($like['username']);
 
-			$like['avatar'] = format_avatar($like['avatar'], $mybb->settings['simplelikes_avatar_dimensions'],
-				$maxAvatarDimensions);
+				$like['avatar'] = format_avatar($like['avatar'], $mybb->settings['simplelikes_avatar_dimensions'],
+					$maxAvatarDimensions);
 
-			$like['profile_link'] = build_profile_link(
-				format_name(htmlspecialchars_uni($like['username']), $like['usergroup'], $like['displaygroup']),
-				$like['user_id']
-			);
+				$like['profile_link'] = build_profile_link(
+					format_name(htmlspecialchars_uni($like['username']), $like['usergroup'], $like['displaygroup']),
+					$like['user_id']
+				);
 
-			$createdAt = new DateTime($like['created_at']);
+				$createdAt = new DateTime($like['created_at']);
 
-			$like['created_at'] = my_date($mybb->settings['dateformat'],
-					$createdAt->getTimestamp()) . ' ' . my_date($mybb->settings['timeformat'],
-					$createdAt->getTimestamp());
+				$like['created_at'] = my_date($mybb->settings['dateformat'],
+						$createdAt->getTimestamp()) . ' ' . my_date($mybb->settings['timeformat'],
+						$createdAt->getTimestamp());
 
-			$likes .= eval($templates->render('simplelikes_likes_popup_liker', true, false));
+				$likes .= eval($templates->render('simplelikes_likes_popup_liker', true, false));
+			}
 		}
 
 		$page = '';
