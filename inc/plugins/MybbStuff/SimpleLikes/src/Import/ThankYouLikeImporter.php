@@ -30,7 +30,7 @@ class MybbStuff_SimpleLikes_Import_ThankYouLikeImporter extends MybbStuff_Simple
 	public function importLikes()
 	{
 		$newLikes = [];
-		$query = $this->db->simple_select('g33k_thankyoulike_thankyoulike', '*');
+		$query = $this->db->simple_select('g33k_thankyoulike_thankyoulike', 'pid, uid');
 		$numConverted = 0;
 		while ($like = $this->db->fetch_array($query)) {
 			$newLikes[] = [

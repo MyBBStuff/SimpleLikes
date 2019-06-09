@@ -13,7 +13,9 @@
 class MybbStuff_SimpleLikes_LikeManager
 {
 	const RESULT_LIKED = 1;
+
 	const RESULT_UNLIKED = 0;
+
 	/**
 	 * @var DB_Base $db
 	 */
@@ -112,7 +114,7 @@ class MybbStuff_SimpleLikes_LikeManager
 	}
 
 	/**
-	 * Format likes into a string for output in the psotbit.
+	 * Format likes into a string for output in the postbit.
 	 *
 	 * @param array $postLikes An array of likes for posts.
 	 * @param array $post The originator post's array.

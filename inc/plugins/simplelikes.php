@@ -38,9 +38,9 @@ function simplelikes_info()
 		'name'          => 'Like System',
 		'description'   => 'A simple post like system.' . $lang->simplelikes_tapatalk_core_edits,
 		'website'       => 'http://www.mybbstuff.com',
-		'author'        => 'euantor',
+		'author'        => 'Euan T',
 		'authorsite'    => 'http://www.euantor.com',
-		'version'       => '2.0.0',
+		'version'       => '2.0.1',
 		'codename'      => 'mybbstuff_simplelikes',
 		'compatibility' => '18*',
 	];
@@ -73,11 +73,11 @@ function simplelikes_install()
 	}
 
 	if (!$db->field_exists('simplelikes_can_like', 'usergroups')) {
-		$db->add_column('usergroups', 'simplelikes_can_like', "INT(1) NOT NULL DEFAULT '0'");
+		$db->add_column('usergroups', 'simplelikes_can_like', "INT(1) NOT NULL DEFAULT 0");
 	}
 
 	if (!$db->field_exists('simplelikes_can_view_likes', 'usergroups')) {
-		$db->add_column('usergroups', 'simplelikes_can_view_likes', "INT(1) NOT NULL DEFAULT '0'");
+		$db->add_column('usergroups', 'simplelikes_can_view_likes', "INT(1) NOT NULL DEFAULT 0");
 	}
 
 	$db->update_query(
@@ -100,7 +100,7 @@ function simplelikes_is_installed()
 
 function simplelikes_uninstall()
 {
-	global $db, $PL, $cache;
+	global $db, $PL, $cache, $lang;
 
 	if (!file_exists(PLUGINLIBRARY)) {
 		flash_message('This plugin requires PluginLibrary, please ensure it is installed correctly.', 'error');
@@ -459,20 +459,20 @@ function simplelikesPostbit(&$post)
 			static $postLikesReceived = null;
 			if (!is_array($postLikesReceived)) {
 				$postLikesReceived = [];
-				$queryString = "SELECT p.uid, (SELECT COUNT(*) FROM %spost_likes l LEFT JOIN %sposts mp ON (l.post_id = mp.pid) WHERE mp.uid = p.uid) AS count FROM %sposts p WHERE {$pids} GROUP BY p.uid";
+				$queryString = "SELECT p.uid, (SELECT COUNT(*) FROM %spost_likes l LEFT JOIN %sposts mp ON (l.post_id = mp.pid) WHERE mp.uid = p.uid) AS numLikes FROM %sposts p WHERE {$pids} GROUP BY p.uid";
 				$query = $db->query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX, TABLE_PREFIX));
 				while ($row = $db->fetch_array($query)) {
-					$postLikesReceived[(int)$row['uid']] = (int)$row['count'];
+					$postLikesReceived[(int)$row['uid']] = (int)$row['numLikes'];
 				}
 			}
 		} else {
 			$postLikesReceived = [];
 			$pid = (int)$post['pid'];
-			$queryString = "SELECT p.uid, (SELECT COUNT(*) FROM %spost_likes l LEFT JOIN %sposts mp ON (l.post_id = mp.pid) WHERE mp.uid = p.uid) AS count FROM %sposts p WHERE pid = {$pid} GROUP BY p.uid";
+			$queryString = "SELECT p.uid, (SELECT COUNT(*) FROM %spost_likes l LEFT JOIN %sposts mp ON (l.post_id = mp.pid) WHERE mp.uid = p.uid) AS numLikes FROM %sposts p WHERE pid = {$pid} GROUP BY p.uid";
 			$query = $db->query(
 				sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX, TABLE_PREFIX)
 			);
-			$postLikesReceived[(int)$post['uid']] = (int)$db->fetch_field($query, 'count');
+			$postLikesReceived[(int)$post['uid']] = (int)$db->fetch_field($query, 'numLikes');
 		}
 
 		if (array_key_exists((int)$post['uid'], $postLikesReceived)) {
@@ -500,9 +500,9 @@ function simplelikesProfile()
 	$postsLiked = eval($templates->render('simplelikes_profile_total_likes'));
 
 	// Number of likes user's posts have
-	$queryString = "SELECT COUNT(l.id) AS count FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.uid = {$uid}";
+	$queryString = "SELECT COUNT(l.id) AS numLikes FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.uid = {$uid}";
 	$query = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
-	$postLikes = my_number_format((int)$db->fetch_field($query, 'count'));
+	$postLikes = my_number_format((int)$db->fetch_field($query, 'numLikes'));
 	$likesReceived = eval($templates->render('simplelikes_profile_likes_received'));
 }
 
@@ -623,7 +623,6 @@ function simplelikesMisc()
 			}
 		}
 
-		$page = '';
 		$page = eval($templates->render('simplelikes_likes_popup', true, false));
 		echo $page;
 	} else {
@@ -657,9 +656,9 @@ function simplelikesMisc()
 				$where_sql .= " AND p.fid NOT IN ({$inactiveforums})";
 			}
 
-			$queryString = "SELECT COUNT(*) AS count FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE l.user_id = {$userId}{$where_sql}";
+			$queryString = "SELECT COUNT(*) AS numLikes FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE l.user_id = {$userId}{$where_sql}";
 			$query = $db->query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
-			$count = $db->fetch_field($query, 'count');
+			$count = $db->fetch_field($query, 'numLikes');
 
 			$page = $mybb->get_input('page', MyBB::INPUT_INT);
 			$perPage = $mybb->settings['simplelikes_likes_per_page'];
@@ -738,7 +737,7 @@ function simplelikesMisc()
 					$where_sql .= " AND p.fid NOT IN ({$inactiveforums})";
 				}
 
-				$queryString = "SELECT COUNT(*) AS count FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.uid = {$userId}{$where_sql} GROUP BY p.pid";
+				$queryString = "SELECT COUNT(*) AS numLikes FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.uid = {$userId}{$where_sql} GROUP BY p.pid";
 				$query = $db->query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
 				$count = $db->num_rows($query);
 
@@ -784,7 +783,7 @@ function simplelikesMisc()
 					$altbg = alt_trow();
 					$like['postlink'] = get_post_link((int)$like['post_id']) . '#pid' . (int)$like['post_id'];
 					$like['subject'] = htmlspecialchars_uni($like['subject']);
-					$like['count'] = my_number_format((int)$like['count']);
+					$like['count'] = my_number_format((int)$like['numLikes']);
 
 					$createdAt = new DateTime($like['created_at']);
 
