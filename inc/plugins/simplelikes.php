@@ -216,7 +216,7 @@ function simplelikes_activate()
     ];
     $cache->update('euantor_plugins', $pluginsCache);
 
-    simplelikes_upgrade($oldVersion, $newVersion);
+    simpleLikesUpgrade($oldVersion, $newVersion);
 
     $PL->settings(
         'simplelikes',
@@ -242,7 +242,7 @@ function simplelikes_activate()
             'likes_per_page' => [
                 'title' => 'Likes per page',
                 'description' => 'The number of likes to show per page.',
-                'value' => 1,
+                'value' => 20,
                 'optionscode' => 'numeric',
             ],
             'avatar_dimensions' => [
@@ -390,7 +390,7 @@ function simpleLikesUninstallMyAlerts()
     }
 }
 
-function simplelikes_upgrade($oldVersion, $newVersion)
+function simpleLikesUpgrade($oldVersion, $newVersion)
 {
     if (empty($oldVersion)) {
         $oldVersion = '1.0.0';
@@ -407,8 +407,8 @@ function simplelikes_upgrade($oldVersion, $newVersion)
     }
 }
 
-$plugins->add_hook('admin_user_groups_edit_graph_tabs', 'simplelikes_usergroup_perms_tab');
-function simplelikes_usergroup_perms_tab(&$tabs)
+$plugins->add_hook('admin_user_groups_edit_graph_tabs', 'simpleLikesAdminUserGroupPermissionsTab');
+function simpleLikesAdminUserGroupPermissionsTab(&$tabs)
 {
     global $lang;
 
@@ -419,8 +419,8 @@ function simplelikes_usergroup_perms_tab(&$tabs)
     $tabs['simplelikes'] = $lang->simplelikes;
 }
 
-$plugins->add_hook('admin_user_groups_edit_graph', 'simplelikes_usergroup_perms');
-function simplelikes_usergroup_perms()
+$plugins->add_hook('admin_user_groups_edit_graph', 'simpleLikesAdminUserGroupPermissions');
+function simpleLikesAdminUserGroupPermissions()
 {
     global $form, $mybb, $lang;
 
@@ -447,8 +447,8 @@ function simplelikes_usergroup_perms()
     echo '</div>';
 }
 
-$plugins->add_hook('admin_user_groups_edit_commit', 'simplelikes_usergroup_perms_save');
-function simplelikes_usergroup_perms_save()
+$plugins->add_hook('admin_user_groups_edit_commit', 'simpleLikesAdminUserGroupPermissionsSave');
+function simpleLikesAdminUserGroupPermissionsSave()
 {
     global $updated_group, $mybb;
 
@@ -456,8 +456,8 @@ function simplelikes_usergroup_perms_save()
     $updated_group['simplelikes_can_view_likes'] = $mybb->get_input('simplelikes_can_view_likes', MyBB::INPUT_INT);
 }
 
-$plugins->add_hook('postbit', 'simplelikesPostbit');
-function simplelikesPostbit(&$post)
+$plugins->add_hook('postbit', 'simpleLikesPostBit');
+function simpleLikesPostBit(&$post)
 {
     global $mybb, $db, $templates, $pids, $postLikeBar, $lang;
 
@@ -557,8 +557,8 @@ SQL;
     }
 }
 
-$plugins->add_hook('member_profile_end', 'simplelikesProfile');
-function simplelikesProfile()
+$plugins->add_hook('member_profile_end', 'simpleLikesProfile');
+function simpleLikesProfile()
 {
     global $mybb, $db, $lang, $memprofile, $templates, $postsLiked, $likesReceived;
 
@@ -569,7 +569,7 @@ function simplelikesProfile()
     $uid = (int)$memprofile['uid'];
 
     // Number of likes user has made
-    $query = $db->simple_select('post_likes', 'COUNT(id) AS count', 'user_id = ' . $uid);
+    $query = $db->simple_select('post_likes', 'COUNT(*) AS count', 'user_id = ' . $uid);
     $usersLikes = my_number_format((int)$db->fetch_field($query, 'count'));
     $postsLiked = eval($templates->render('simplelikes_profile_total_likes'));
 
@@ -577,18 +577,19 @@ function simplelikesProfile()
 
     // Number of likes user's posts have
     $queryString = <<<SQL
-SELECT COUNT(l.id) AS numLikes 
+SELECT COUNT(*) AS numlikes 
 FROM {$tablePrefix}post_likes l 
     INNER JOIN {$tablePrefix}posts p ON (l.post_id = p.pid) 
-WHERE p.uid = {$uid}
+WHERE p.uid = {$uid};
 SQL;
+
     $query = $db->write_query($queryString);
-    $postLikes = my_number_format((int)$db->fetch_field($query, 'numLikes'));
+    $postLikes = my_number_format((int)$db->fetch_field($query, 'numlikes'));
     $likesReceived = eval($templates->render('simplelikes_profile_likes_received'));
 }
 
-$plugins->add_hook('myalerts_load_lang', 'simplelikesAlertSettings');
-function simplelikesAlertSettings()
+$plugins->add_hook('myalerts_load_lang', 'simpleLikesAlertSettings');
+function simpleLikesAlertSettings()
 {
     global $lang;
 
@@ -599,8 +600,8 @@ function simplelikesAlertSettings()
     $lang->myalerts_setting_simplelikes = $lang->simplelikes_alert_setting;
 }
 
-$plugins->add_hook('global_start', 'simplelikesGlobal');
-function simplelikesGlobal()
+$plugins->add_hook('global_start', 'simpleLikesGlobal', -1);
+function simpleLikesGlobal()
 {
     global $templatelist, $mybb;
 
@@ -608,7 +609,7 @@ function simplelikesGlobal()
         $templatelist = '';
     }
 
-    simplelikesInitMyAlertsFormatter();
+    simpleLikesInitMyAlertsFormatter();
 
     $templatelist .= ',';
 
@@ -617,7 +618,7 @@ function simplelikesGlobal()
     }
 
     if (THIS_SCRIPT == 'misc.php' && $mybb->input['action'] == 'post_likes_received_by_user') {
-        $templatelist .= 'multipage_page_current,multipage_page,multipage_nextpage,multipage,simplelikes_likes_received_by_user_row,simplelikes_likes_by_user';
+        $templatelist .= 'multipage_page_current,multipage_page,multipage_nextpage,multipage,simplelikes_likes_received_by_user_row,simplelikes_likes_received_by_user';
     }
 
     if (THIS_SCRIPT == 'misc.php' && $mybb->input['action'] == 'post_likes') {
@@ -633,7 +634,7 @@ function simplelikesGlobal()
     }
 }
 
-function simplelikesInitMyAlertsFormatter()
+function simpleLikesInitMyAlertsFormatter()
 {
     if (function_exists('myalerts_is_activated') && myalerts_is_activated()) {
         global $mybb, $lang;
@@ -649,7 +650,7 @@ function simplelikesInitMyAlertsFormatter()
     }
 }
 
-$plugins->add_hook('misc_start', 'simplelikesMisc');
+$plugins->add_hook('misc_start', 'simpleLikesMisc');
 function simpleLikesMisc()
 {
     global $mybb;
@@ -671,9 +672,7 @@ function simpleLikesMiscPostLikes()
 {
     global $mybb, $db, $templates, $theme, $headerinclude, $lang;
 
-    if (!isset($lang->simplelikes)) {
-        $lang->load('simplelikes');
-    }
+    $lang->load('simplelikes');
 
     if (!$mybb->usergroup['simplelikes_can_view_likes']) {
         $likes = eval($templates->render('simplelikes_likes_popup_nopermission', true, false));
@@ -683,38 +682,37 @@ function simpleLikesMiscPostLikes()
         }
 
         $pid = $mybb->get_input('post_id', MyBB::INPUT_INT);
-        $post = get_post($pid);
 
         $likeSystem = new LikeManager($mybb, $db, $lang);
 
         $likeArray = $likeSystem->getLikes($pid);
 
         if (empty($likeArray)) {
-            error($lang->simplelikes_error_no_likes);
-        }
+            $likes = eval($templates->render('simplelikes_likes_popup_no_likes', true, false));
+        } else {
+            $maxAvatarDimensions = str_replace('|', 'x', $mybb->settings['simplelikes_avatar_dimensions']);
 
-        $maxAvatarDimensions = str_replace('|', 'x', $mybb->settings['simplelikes_avatar_dimensions']);
+            $likes = '';
+            foreach ($likeArray as $like) {
+                $altbg = alt_trow();
+                $like['username'] = htmlspecialchars_uni($like['username']);
 
-        $likes = '';
-        foreach ($likeArray as $like) {
-            $altbg = alt_trow();
-            $like['username'] = htmlspecialchars_uni($like['username']);
+                $like['avatar'] = format_avatar($like['avatar'], $mybb->settings['simplelikes_avatar_dimensions'],
+                    $maxAvatarDimensions);
 
-            $like['avatar'] = format_avatar($like['avatar'], $mybb->settings['simplelikes_avatar_dimensions'],
-                $maxAvatarDimensions);
+                $like['profile_link'] = build_profile_link(
+                    format_name(htmlspecialchars_uni($like['username']), $like['usergroup'], $like['displaygroup']),
+                    $like['user_id']
+                );
 
-            $like['profile_link'] = build_profile_link(
-                format_name(htmlspecialchars_uni($like['username']), $like['usergroup'], $like['displaygroup']),
-                $like['user_id']
-            );
+                $createdAt = new DateTime($like['created_at']);
 
-            $createdAt = new DateTime($like['created_at']);
+                $like['created_at'] = my_date($mybb->settings['dateformat'],
+                        $createdAt->getTimestamp()) . ' ' . my_date($mybb->settings['timeformat'],
+                        $createdAt->getTimestamp());
 
-            $like['created_at'] = my_date($mybb->settings['dateformat'],
-                    $createdAt->getTimestamp()) . ' ' . my_date($mybb->settings['timeformat'],
-                    $createdAt->getTimestamp());
-
-            $likes .= eval($templates->render('simplelikes_likes_popup_liker', true, false));
+                $likes .= eval($templates->render('simplelikes_likes_popup_liker', true, false));
+            }
         }
     }
 
@@ -796,7 +794,7 @@ SQL;
 
     $likes = '';
     $queryString = <<<SQL
-SELECT * FROM {$tablePrefix}post_likes l 
+SELECT p.*, l.created_at FROM {$tablePrefix}post_likes l 
     INNER JOIN {$tablePrefix}posts p ON (l.post_id = p.pid) 
 WHERE l.user_id = {$userId}{$whereSql} 
 ORDER BY l.id DESC 
@@ -806,7 +804,7 @@ SQL;
     $query = $db->query($queryString);
     while ($like = $db->fetch_array($query)) {
         $altbg = alt_trow();
-        $like['postlink'] = get_post_link((int)$like['post_id']) . '#pid' . (int)$like['post_id'];
+        $like['postlink'] = get_post_link((int)$like['pid']) . '#pid' . (int)$like['pid'];
         $like['subject'] = htmlspecialchars_uni($like['subject']);
 
         $createdAt = new DateTime($like['created_at']);
@@ -855,11 +853,10 @@ function simpleLikesMiscPostLikesReceivedByUser()
     $tablePrefix = TABLE_PREFIX;
 
     $queryString = <<<SQL
-SELECT COUNT(*) AS numLikes 
+SELECT COUNT(*) 
 FROM {$tablePrefix}post_likes l 
     INNER JOIN {$tablePrefix}posts p ON (l.post_id = p.pid) 
-WHERE p.uid = {$userId}{$where_sql} 
-GROUP BY p.pid;
+WHERE p.uid = {$userId}{$where_sql};
 SQL;
 
     $query = $db->query($queryString);
@@ -903,12 +900,11 @@ SQL;
 
     $likes = '';
     $queryString = <<<SQL
-SELECT *, COUNT(id) AS numLikes 
-FROM {$tablePrefix}post_likes l 
-    INNER JOIN {$tablePrefix}posts p ON (l.post_id = p.pid) 
+SELECT p.*, (SELECT COUNT(*) FROM {$tablePrefix}post_likes l WHERE l.post_id = p.pid) AS numlikes 
+FROM {$tablePrefix}posts p
+INNER JOIN {$tablePrefix}post_likes l ON (p.pid = l.post_id)
 WHERE p.uid = {$userId}{$where_sql} 
-GROUP BY p.pid 
-ORDER BY l.id DESC 
+ORDER BY p.pid DESC 
 LIMIT {$perPage} OFFSET {$start};
 SQL;
 
@@ -916,15 +912,10 @@ SQL;
 
     while ($like = $db->fetch_array($query)) {
         $altbg = alt_trow();
-        $like['postlink'] = get_post_link((int)$like['post_id']) . '#pid' . (int)$like['post_id'];
+        $like['postlink'] = get_post_link((int)$like['pid']) . '#pid' . (int)$like['pid'];
         $like['subject'] = htmlspecialchars_uni($like['subject']);
-        $like['count'] = my_number_format((int)$like['numLikes']);
-
-        $createdAt = new DateTime($like['created_at']);
-
-        $like['created_at'] = my_date($mybb->settings['dateformat'],
-                $createdAt->getTimestamp()) . ' ' . my_date($mybb->settings['timeformat'],
-                $createdAt->getTimestamp());
+        $like['count'] = my_number_format((int)$like['numlikes']);
+        $like['pid'] = (int) $like['pid'];
 
         $likes .= eval($templates->render('simplelikes_likes_received_by_user_row'));
     }

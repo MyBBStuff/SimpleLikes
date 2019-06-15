@@ -102,21 +102,19 @@ class LikeManager
 SELECT l.*, u.username, u.avatar, u.usergroup, u.displaygroup 
 FROM {$tablePrefix}post_likes l 
 LEFT JOIN {$tablePrefix}users u ON (l.user_id = u.uid) 
-WHERE {$inClause}
+WHERE {$inClause};
 SQL;
 
             $query = $this->db->query($queryString);
             while ($like = $this->db->fetch_array($query)) {
                 $likes[(int)$like['post_id']][(int)$like['user_id']] = $like;
             }
-        } else {
-            $pid = (int)$pid;
-
+        } else if (is_int($pid)) {
             $queryString = <<<SQL
 SELECT l.*, u.username, u.avatar, u.usergroup, u.displaygroup 
 FROM {$tablePrefix}post_likes l 
-LEFT JOIN {$tablePrefix}users u ON (l.user_id = u.uid) 
-WHERE l.post_id = {$pid}
+INNER JOIN {$tablePrefix}users u ON (l.user_id = u.uid) 
+WHERE l.post_id = {$pid};
 SQL;
 
             $query = $this->db->query($queryString);
