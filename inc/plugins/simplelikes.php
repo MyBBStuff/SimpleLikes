@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 use MybbStuff\Core\ClassLoader;
 use MybbStuff\SimpleLikes\Import\Manager;
+use MybbStuff\SimpleLikes\Import\ThankYouLikeImporter;
 use MybbStuff\SimpleLikes\LikeManager;
 
 defined(
@@ -24,7 +25,7 @@ $classLoader->registerNamespace(
 $classLoader->register();
 
 $importManager = Manager::getInstance();
-$importManager->addImporter('ThankYouLikeImporter');
+$importManager->addImporter(ThankYouLikeImporter::class);
 
 function simplelikes_info()
 {
