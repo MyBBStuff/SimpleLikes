@@ -9,8 +9,8 @@ defined(
     'IN_MYBB'
 ) or die('Direct initialization of this file is not allowed.<br /><br />Please make sure IN_MYBB is defined.');
 
-defined('MYBBSTUFF_CORE_PATH') || define('MYBBSTUFF_CORE_PATH', __DIR__ . 'MybbStuff/Core');
-define('SIMPLELIKES_PLUGIN_PATH', __DIR__ . 'MybbStuff/SimpleLikes');
+defined('MYBBSTUFF_CORE_PATH') || define('MYBBSTUFF_CORE_PATH', __DIR__ . '/MybbStuff/Core');
+define('SIMPLELIKES_PLUGIN_PATH', __DIR__ . '/MybbStuff/SimpleLikes');
 
 defined('PLUGINLIBRARY') or define('PLUGINLIBRARY', MYBB_ROOT . 'inc/plugins/pluginlibrary.php');
 
