@@ -502,10 +502,10 @@ function simpleLikesPostBit(&$post)
         $post['button_like'] = eval($templates->render('simplelikes_likebutton'));
     }
 
-    $tablePrefix = TABLE_PREFIX;
-
     // Get number of likes user has received
     if ($mybb->settings['simplelikes_get_num_likes_user_postbit']) {
+        $tablePrefix = TABLE_PREFIX;
+
         if (is_string($pids)) {
             static $postLikesReceived = null;
             if (!is_array($postLikesReceived)) {
@@ -517,7 +517,7 @@ SELECT p.uid,
        FROM {$tablePrefix}post_likes l 
            INNER JOIN {$tablePrefix}posts mp ON (l.post_id = mp.pid) 
        WHERE mp.uid = p.uid) 
-           AS numLikes 
+           AS numlikes 
 FROM {$tablePrefix}posts p 
 WHERE {$pids} 
 GROUP BY p.uid
@@ -525,7 +525,7 @@ SQL;
                 $query = $db->query($queryString);
 
                 while ($row = $db->fetch_array($query)) {
-                    $postLikesReceived[(int)$row['uid']] = (int)$row['numLikes'];
+                    $postLikesReceived[(int)$row['uid']] = (int)$row['numlikes'];
                 }
             }
         } else {
@@ -538,7 +538,7 @@ SELECT p.uid,
        FROM {$tablePrefix}post_likes l 
            INNER JOIN {$tablePrefix}posts mp ON (l.post_id = mp.pid) 
        WHERE mp.uid = p.uid) 
-           AS numLikes 
+           AS numlikes 
 FROM {$tablePrefix}posts p 
 WHERE pid = {$pid} 
 GROUP BY p.uid
@@ -546,7 +546,7 @@ SQL;
 
             $query = $db->query($queryString);
 
-            $postLikesReceived[(int)$post['uid']] = (int)$db->fetch_field($query, 'numLikes');
+            $postLikesReceived[(int)$post['uid']] = (int)$db->fetch_field($query, 'numlikes');
         }
 
         if (array_key_exists((int)$post['uid'], $postLikesReceived)) {
@@ -755,14 +755,14 @@ function simpleLikesMiscPostLikesByUser()
     $tablePrefix = TABLE_PREFIX;
 
     $queryString = <<<SQL
-SELECT COUNT(*) AS numLikes 
+SELECT COUNT(*) AS numlikes 
 FROM {$tablePrefix}post_likes l 
     INNER JOIN {$tablePrefix}posts p ON (l.post_id = p.pid) 
 WHERE l.user_id = {$userId}{$whereSql};
 SQL;
 
     $query = $db->query($queryString);
-    $count = $db->fetch_field($query, 'numLikes');
+    $count = $db->fetch_field($query, 'numlikes');
 
     $page = $mybb->get_input('page', MyBB::INPUT_INT);
     $perPage = $mybb->settings['simplelikes_likes_per_page'];
@@ -853,14 +853,14 @@ function simpleLikesMiscPostLikesReceivedByUser()
     $tablePrefix = TABLE_PREFIX;
 
     $queryString = <<<SQL
-SELECT COUNT(*) 
+SELECT COUNT(*) AS num
 FROM {$tablePrefix}post_likes l 
     INNER JOIN {$tablePrefix}posts p ON (l.post_id = p.pid) 
 WHERE p.uid = {$userId}{$where_sql};
 SQL;
 
     $query = $db->query($queryString);
-    $count = $db->num_rows($query);
+    $count = (int) $db->fetch_field($query, 'num');
 
     $page = $mybb->get_input('page', MyBB::INPUT_INT);
     $perPage = $mybb->settings['simplelikes_likes_per_page'];
