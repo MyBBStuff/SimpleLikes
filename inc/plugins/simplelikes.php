@@ -650,286 +650,309 @@ function simplelikesInitMyAlertsFormatter()
 }
 
 $plugins->add_hook('misc_start', 'simplelikesMisc');
-function simplelikesMisc()
+function simpleLikesMisc()
 {
     global $mybb;
 
-    if ($mybb->input['action'] == 'post_likes') {
-        global $db, $templates, $theme, $headerinclude, $lang;
+    switch ($mybb->get_input('action', MyBB::INPUT_STRING)) {
+        case 'post_likes':
+            simpleLikesMiscPostLikes();
+            break;
+        case 'post_likes_by_user':
+            simpleLikesMiscPostLikesByUser();
+            break;
+        case 'post_likes_received_by_user':
+            simpleLikesMiscPostLikesReceivedByUser();
+            break;
+    }
+}
 
-        if (!isset($lang->simplelikes)) {
-            $lang->load('simplelikes');
-        }
+function simpleLikesMiscPostLikes()
+{
+    global $mybb, $db, $templates, $theme, $headerinclude, $lang;
 
-        if (!$mybb->usergroup['simplelikes_can_view_likes']) {
-            $likes = eval($templates->render('simplelikes_likes_popup_nopermission', true, false));
-        } else {
-            if (!isset($mybb->input['post_id'])) {
-                error($lang->simplelikes_error_post_id);
-            }
+    if (!isset($lang->simplelikes)) {
+        $lang->load('simplelikes');
+    }
 
-            $pid = $mybb->get_input('post_id', MyBB::INPUT_INT);
-            $post = get_post($pid);
-
-            $likeSystem = new LikeManager($mybb, $db, $lang);
-
-            $likeArray = $likeSystem->getLikes($pid);
-
-            if (empty($likeArray)) {
-                error($lang->simplelikes_error_no_likes);
-            }
-
-            $maxAvatarDimensions = str_replace('|', 'x', $mybb->settings['simplelikes_avatar_dimensions']);
-
-            $likes = '';
-            foreach ($likeArray as $like) {
-                $altbg = alt_trow();
-                $like['username'] = htmlspecialchars_uni($like['username']);
-
-                $like['avatar'] = format_avatar($like['avatar'], $mybb->settings['simplelikes_avatar_dimensions'],
-                    $maxAvatarDimensions);
-
-                $like['profile_link'] = build_profile_link(
-                    format_name(htmlspecialchars_uni($like['username']), $like['usergroup'], $like['displaygroup']),
-                    $like['user_id']
-                );
-
-                $createdAt = new DateTime($like['created_at']);
-
-                $like['created_at'] = my_date($mybb->settings['dateformat'],
-                        $createdAt->getTimestamp()) . ' ' . my_date($mybb->settings['timeformat'],
-                        $createdAt->getTimestamp());
-
-                $likes .= eval($templates->render('simplelikes_likes_popup_liker', true, false));
-            }
-        }
-
-        $page = eval($templates->render('simplelikes_likes_popup', true, false));
-        echo $page;
+    if (!$mybb->usergroup['simplelikes_can_view_likes']) {
+        $likes = eval($templates->render('simplelikes_likes_popup_nopermission', true, false));
     } else {
-        if ($mybb->input['action'] == 'post_likes_by_user') {
-            if (!$mybb->usergroup['simplelikes_can_view_likes']) {
-                error_no_permission();
-            }
+        if (!isset($mybb->input['post_id'])) {
+            error($lang->simplelikes_error_post_id);
+        }
 
-            global $db, $templates, $lang;
-            global $headerinclude, $header, $footer, $theme, $multipage;
+        $pid = $mybb->get_input('post_id', MyBB::INPUT_INT);
+        $post = get_post($pid);
 
-            if (!isset($lang->simplelikes)) {
-                $lang->load('simplelikes');
-            }
+        $likeSystem = new LikeManager($mybb, $db, $lang);
 
-            if (!isset($mybb->input['user_id']) || (int)$mybb->input['user_id'] == 0) {
-                error($lang->simplelikes_error_user_id);
-            }
+        $likeArray = $likeSystem->getLikes($pid);
 
-            $userId = $mybb->get_input('user_id', MyBB::INPUT_INT);
-            $user = get_user($userId);
+        if (empty($likeArray)) {
+            error($lang->simplelikes_error_no_likes);
+        }
 
-            require_once MYBB_ROOT . 'inc/functions_search.php';
-            $where_sql = '';
-            $unsearchforums = get_unsearchable_forums();
-            if ($unsearchforums) {
-                $where_sql .= " AND p.fid NOT IN ({$unsearchforums})";
-            }
-            $inactiveforums = get_inactive_forums();
-            if ($inactiveforums) {
-                $where_sql .= " AND p.fid NOT IN ({$inactiveforums})";
-            }
+        $maxAvatarDimensions = str_replace('|', 'x', $mybb->settings['simplelikes_avatar_dimensions']);
 
-            $tablePrefix = TABLE_PREFIX;
+        $likes = '';
+        foreach ($likeArray as $like) {
+            $altbg = alt_trow();
+            $like['username'] = htmlspecialchars_uni($like['username']);
 
-            $queryString = <<<SQL
+            $like['avatar'] = format_avatar($like['avatar'], $mybb->settings['simplelikes_avatar_dimensions'],
+                $maxAvatarDimensions);
+
+            $like['profile_link'] = build_profile_link(
+                format_name(htmlspecialchars_uni($like['username']), $like['usergroup'], $like['displaygroup']),
+                $like['user_id']
+            );
+
+            $createdAt = new DateTime($like['created_at']);
+
+            $like['created_at'] = my_date($mybb->settings['dateformat'],
+                    $createdAt->getTimestamp()) . ' ' . my_date($mybb->settings['timeformat'],
+                    $createdAt->getTimestamp());
+
+            $likes .= eval($templates->render('simplelikes_likes_popup_liker', true, false));
+        }
+    }
+
+    $page = eval($templates->render('simplelikes_likes_popup', true, false));
+    echo $page;
+}
+
+function simpleLikesMiscPostLikesByUser()
+{
+    global $mybb, $db, $templates, $lang, $headerinclude, $header, $footer, $theme, $multipage;
+
+    if (!$mybb->usergroup['simplelikes_can_view_likes']) {
+        error_no_permission();
+
+        return;
+    }
+
+    $lang->load('simplelikes');
+
+    if (!isset($mybb->input['user_id']) || (int)$mybb->input['user_id'] == 0) {
+        error($lang->simplelikes_error_user_id);
+
+        return;
+    }
+
+    $userId = $mybb->get_input('user_id', MyBB::INPUT_INT);
+    $user = get_user($userId);
+
+    require_once MYBB_ROOT . 'inc/functions_search.php';
+    $whereSql = '';
+    $unSearchableForums = get_unsearchable_forums();
+    if ($unSearchableForums) {
+        $whereSql .= " AND p.fid NOT IN ({$unSearchableForums})";
+    }
+    $inactiveForums = get_inactive_forums();
+    if ($inactiveForums) {
+        $whereSql .= " AND p.fid NOT IN ({$inactiveForums})";
+    }
+
+    $tablePrefix = TABLE_PREFIX;
+
+    $queryString = <<<SQL
 SELECT COUNT(*) AS numLikes 
 FROM {$tablePrefix}post_likes l 
     INNER JOIN {$tablePrefix}posts p ON (l.post_id = p.pid) 
-WHERE l.user_id = {$userId}{$where_sql};
+WHERE l.user_id = {$userId}{$whereSql};
 SQL;
 
-            $query = $db->query($queryString);
-            $count = $db->fetch_field($query, 'numLikes');
+    $query = $db->query($queryString);
+    $count = $db->fetch_field($query, 'numLikes');
 
-            $page = $mybb->get_input('page', MyBB::INPUT_INT);
-            $perPage = $mybb->settings['simplelikes_likes_per_page'];
-            $pages = $count / $perPage;
-            $pages = ceil($pages);
-            if ($mybb->input['page'] == "last") {
-                $page = $pages;
-            }
+    $page = $mybb->get_input('page', MyBB::INPUT_INT);
+    $perPage = $mybb->settings['simplelikes_likes_per_page'];
+    $pages = $count / $perPage;
+    $pages = ceil($pages);
+    if ($mybb->input['page'] == "last") {
+        $page = $pages;
+    }
 
-            if ($page > $pages OR $page <= 0) {
-                $page = 1;
-            }
+    if ($page > $pages || $page <= 0) {
+        $page = 1;
+    }
 
-            if ($page AND $page > 0) {
-                $start = ($page - 1) * $perPage;
-            } else {
-                $start = 0;
-                $page = 1;
-            }
-            $multipage = multipage($count, $perPage, $page, "misc.php?action=post_likes_by_user&user_id={$userId}");
+    if ($page && $page > 0) {
+        $start = ($page - 1) * $perPage;
+    } else {
+        $start = 0;
+        $page = 1;
+    }
 
-            $lang->simplelikes_likes_by_user = $lang->sprintf(
-                $lang->simplelikes_likes_by_user,
-                htmlspecialchars_uni($user['username'])
-            );
+    $multipage = multipage($count, $perPage, $page, "misc.php?action=post_likes_by_user&user_id={$userId}");
 
-            add_breadcrumb($lang->simplelikes_likes_by_user, "misc.php?action=post_likes_by_user&user_id={$userId}");
+    $lang->simplelikes_likes_by_user = $lang->sprintf(
+        $lang->simplelikes_likes_by_user,
+        htmlspecialchars_uni($user['username'])
+    );
 
-            $likes = '';
-            $queryString = <<<SQL
+    add_breadcrumb($lang->simplelikes_likes_by_user, "misc.php?action=post_likes_by_user&user_id={$userId}");
+
+    $likes = '';
+    $queryString = <<<SQL
 SELECT * FROM {$tablePrefix}post_likes l 
     INNER JOIN {$tablePrefix}posts p ON (l.post_id = p.pid) 
-WHERE l.user_id = {$userId}{$where_sql} 
+WHERE l.user_id = {$userId}{$whereSql} 
 ORDER BY l.id DESC 
-LIMIT {$start}, {$perPage};
+LIMIT {$perPage} OFFSET {$start}
 SQL;
 
-            $query = $db->query($queryString);
-            while ($like = $db->fetch_array($query)) {
-                $altbg = alt_trow();
-                $like['postlink'] = get_post_link((int)$like['post_id']) . '#pid' . (int)$like['post_id'];
-                $like['subject'] = htmlspecialchars_uni($like['subject']);
+    $query = $db->query($queryString);
+    while ($like = $db->fetch_array($query)) {
+        $altbg = alt_trow();
+        $like['postlink'] = get_post_link((int)$like['post_id']) . '#pid' . (int)$like['post_id'];
+        $like['subject'] = htmlspecialchars_uni($like['subject']);
 
-                $createdAt = new DateTime($like['created_at']);
+        $createdAt = new DateTime($like['created_at']);
 
-                $like['created_at'] = my_date($mybb->settings['dateformat'],
-                        $createdAt->getTimestamp()) . ' ' . my_date($mybb->settings['timeformat'],
-                        $createdAt->getTimestamp());
+        $like['created_at'] = my_date($mybb->settings['dateformat'],
+                $createdAt->getTimestamp()) . ' ' . my_date($mybb->settings['timeformat'],
+                $createdAt->getTimestamp());
 
-                $likes .= eval($templates->render('simplelikes_likes_by_user_row'));
-            }
+        $likes .= eval($templates->render('simplelikes_likes_by_user_row'));
+    }
 
-            $page = eval($templates->render('simplelikes_likes_by_user'));
-            output_page($page);
-        } else {
-            if ($mybb->input['action'] == 'post_likes_received_by_user') {
-                if (!$mybb->usergroup['simplelikes_can_view_likes']) {
-                    error_no_permission();
-                }
+    $page = eval($templates->render('simplelikes_likes_by_user'));
+    output_page($page);
+}
 
-                global $db, $templates, $lang;
-                global $headerinclude, $header, $footer, $theme, $multipage;
+function simpleLikesMiscPostLikesReceivedByUser()
+{
+    global $mybb, $db, $templates, $lang, $headerinclude, $header, $footer, $theme, $multipage;
 
-                if (!isset($lang->simplelikes)) {
-                    $lang->load('simplelikes');
-                }
+    if (!$mybb->usergroup['simplelikes_can_view_likes']) {
+        error_no_permission();
+    }
 
-                if (!isset($mybb->input['user_id']) OR (int)$mybb->input['user_id'] == 0) {
-                    error($lang->simplelikes_error_user_id);
-                }
+    $lang->load('simplelikes');
 
-                $userId = $mybb->get_input('user_id', MyBB::INPUT_INT);
-                $user = get_user($userId);
+    if (!isset($mybb->input['user_id']) OR (int)$mybb->input['user_id'] == 0) {
+        error($lang->simplelikes_error_user_id);
 
-                require_once MYBB_ROOT . 'inc/functions_search.php';
-                $where_sql = '';
-                $unsearchforums = get_unsearchable_forums();
-                if ($unsearchforums) {
-                    $where_sql .= " AND p.fid NOT IN ({$unsearchforums})";
-                }
-                $inactiveforums = get_inactive_forums();
-                if ($inactiveforums) {
-                    $where_sql .= " AND p.fid NOT IN ({$inactiveforums})";
-                }
+        return;
+    }
 
-                $tablePrefix = TABLE_PREFIX;
+    $userId = $mybb->get_input('user_id', MyBB::INPUT_INT);
+    $user = get_user($userId);
 
-                $queryString = <<<SQL
+    require_once MYBB_ROOT . 'inc/functions_search.php';
+    $where_sql = '';
+    $unsearchableForums = get_unsearchable_forums();
+    if ($unsearchableForums) {
+        $where_sql .= " AND p.fid NOT IN ({$unsearchableForums})";
+    }
+    $inactiveForums = get_inactive_forums();
+    if ($inactiveForums) {
+        $where_sql .= " AND p.fid NOT IN ({$inactiveForums})";
+    }
+
+    $tablePrefix = TABLE_PREFIX;
+
+    $queryString = <<<SQL
 SELECT COUNT(*) AS numLikes 
 FROM {$tablePrefix}post_likes l 
     INNER JOIN {$tablePrefix}posts p ON (l.post_id = p.pid) 
 WHERE p.uid = {$userId}{$where_sql} 
 GROUP BY p.pid;
 SQL;
-                $query = $db->query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
-                $count = $db->num_rows($query);
 
-                $page = $mybb->get_input('page', MyBB::INPUT_INT);
-                $perPage = $mybb->settings['simplelikes_likes_per_page'];
-                $pages = $count / $perPage;
-                $pages = ceil($pages);
-                if ($mybb->get_input('page') == "last") {
-                    $page = $pages;
-                }
+    $query = $db->query($queryString);
+    $count = $db->num_rows($query);
 
-                if ($page > $pages OR $page <= 0) {
-                    $page = 1;
-                }
+    $page = $mybb->get_input('page', MyBB::INPUT_INT);
+    $perPage = $mybb->settings['simplelikes_likes_per_page'];
+    $pages = $count / $perPage;
+    $pages = ceil($pages);
+    if ($mybb->get_input('page') == "last") {
+        $page = $pages;
+    }
 
-                if ($page AND $page > 0) {
-                    $start = ($page - 1) * $perPage;
-                } else {
-                    $start = 0;
-                    $page = 1;
-                }
-                $multipage = multipage(
-                    $count,
-                    $perPage,
-                    $page,
-                    "misc.php?action=post_likes_received_by_user&user_id={$userId}"
-                );
+    if ($page > $pages OR $page <= 0) {
+        $page = 1;
+    }
 
-                $lang->simplelikes_likes_received_by_user = $lang->sprintf(
-                    $lang->simplelikes_likes_received_by_user,
-                    htmlspecialchars_uni($user['username'])
-                );
+    if ($page AND $page > 0) {
+        $start = ($page - 1) * $perPage;
+    } else {
+        $start = 0;
+        $page = 1;
+    }
 
-                add_breadcrumb(
-                    $lang->simplelikes_likes_received_by_user,
-                    "misc.php?action=post_likes_received_by_user&user_id={$userId}"
-                );
+    $multipage = multipage(
+        $count,
+        $perPage,
+        $page,
+        "misc.php?action=post_likes_received_by_user&user_id={$userId}"
+    );
 
-                $likes = '';
-                $queryString = <<<SQL
+    $lang->simplelikes_likes_received_by_user = $lang->sprintf(
+        $lang->simplelikes_likes_received_by_user,
+        htmlspecialchars_uni($user['username'])
+    );
+
+    add_breadcrumb(
+        $lang->simplelikes_likes_received_by_user,
+        "misc.php?action=post_likes_received_by_user&user_id={$userId}"
+    );
+
+    $likes = '';
+    $queryString = <<<SQL
 SELECT *, COUNT(id) AS numLikes 
 FROM {$tablePrefix}post_likes l 
     INNER JOIN {$tablePrefix}posts p ON (l.post_id = p.pid) 
 WHERE p.uid = {$userId}{$where_sql} 
 GROUP BY p.pid 
 ORDER BY l.id DESC 
-LIMIT {$start}, {$perPage};
+LIMIT {$perPage} OFFSET {$start};
 SQL;
-                $query = $db->query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
-                while ($like = $db->fetch_array($query)) {
-                    $altbg = alt_trow();
-                    $like['postlink'] = get_post_link((int)$like['post_id']) . '#pid' . (int)$like['post_id'];
-                    $like['subject'] = htmlspecialchars_uni($like['subject']);
-                    $like['count'] = my_number_format((int)$like['numLikes']);
 
-                    $createdAt = new DateTime($like['created_at']);
+    $query = $db->query($queryString);
 
-                    $like['created_at'] = my_date($mybb->settings['dateformat'],
-                            $createdAt->getTimestamp()) . ' ' . my_date($mybb->settings['timeformat'],
-                            $createdAt->getTimestamp());
+    while ($like = $db->fetch_array($query)) {
+        $altbg = alt_trow();
+        $like['postlink'] = get_post_link((int)$like['post_id']) . '#pid' . (int)$like['post_id'];
+        $like['subject'] = htmlspecialchars_uni($like['subject']);
+        $like['count'] = my_number_format((int)$like['numLikes']);
 
-                    $likes .= eval($templates->render('simplelikes_likes_received_by_user_row'));
-                }
+        $createdAt = new DateTime($like['created_at']);
 
-                $page = eval($templates->render('simplelikes_likes_received_by_user'));
-                output_page($page);
-            }
-        }
+        $like['created_at'] = my_date($mybb->settings['dateformat'],
+                $createdAt->getTimestamp()) . ' ' . my_date($mybb->settings['timeformat'],
+                $createdAt->getTimestamp());
+
+        $likes .= eval($templates->render('simplelikes_likes_received_by_user_row'));
     }
+
+    $page = eval($templates->render('simplelikes_likes_received_by_user'));
+    output_page($page);
 }
 
 $plugins->add_hook('xmlhttp', 'simplelikesAjax');
-function simplelikesAjax()
+function simpleLikesAjax()
 {
     global $mybb, $db, $lang, $templates, $theme;
 
-    if ($mybb->get_input('action') == 'like_post') {
-        if (!verify_post_check($mybb->get_input('my_post_key'), true)) {
-            xmlhttp_error($lang->invalid_post_code);
-        }
+    if ($mybb->get_input('action', MyBB::INPUT_STRING) !== 'like_post') {
+        return;
+    }
 
-        if (!isset($lang->simplelikes)) {
-            $lang->load('simplelikes');
-        }
+    if (!verify_post_check($mybb->get_input('my_post_key'), true)) {
+        xmlhttp_error($lang->invalid_post_code);
 
-        if (!isset($mybb->input['post_id'])) {
-            xmlhttp_error($lang->simplelikes_error_post_id);
-        }
+        return;
+    }
+
+    $lang->load('simplelikes');
+
+    if (!isset($mybb->input['post_id'])) {
+        xmlhttp_error($lang->simplelikes_error_post_id);
+    }
 
         $postId = $mybb->get_input('post_id', MyBB::INPUT_INT);
         $post = get_post($postId);
@@ -1017,9 +1040,7 @@ function simplelikesAjax()
             header('Content-type: application/json');
             $postLikes = [];
             $postLikes[$postId] = $likeSystem->getLikes($postId);
-            $likeString = '';
             $likeString = $likeSystem->formatLikes($postLikes, $post);
-            $templateString = '';
 
             $templateString = eval($templates->render('simplelikes_likebar'));
             echo json_encode(
@@ -1037,7 +1058,6 @@ function simplelikesAjax()
                 $lang->simplelikes_thanks_title
             );
         }
-    }
 }
 
 function simplelikes_tapatalk_integration()

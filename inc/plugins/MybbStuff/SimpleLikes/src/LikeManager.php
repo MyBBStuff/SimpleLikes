@@ -115,7 +115,7 @@ SQL;
             $queryString = <<<SQL
 SELECT l.*, u.username, u.avatar, u.usergroup, u.displaygroup 
 FROM {$tablePrefix}post_likes l 
-LEFT JOIN {$tablePrefix} users u ON (l.user_id = u.uid) 
+LEFT JOIN {$tablePrefix}users u ON (l.user_id = u.uid) 
 WHERE l.post_id = {$pid}
 SQL;
 
