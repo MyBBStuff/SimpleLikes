@@ -1,19 +1,19 @@
 <?php
+declare(strict_types=1);
+
+namespace MybbStuff\SimpleLikes\Import;
+
+use DB_Base;
 
 /**
  * Importer manager class that allows the registering of custom importers extending the AbstractImporter class.
- *
- * @package Simple Likes
- * @author  Euan T. <euan@euantor.com>
- * @license http://opensource.org/licenses/mit-license.php MIT license
- * @version 2.0.0
  */
-class MybbStuff_SimpleLikes_Import_Manager
+class Manager
 {
     /**
      * Singleton instance.
      *
-     * @var MybbStuff_SimpleLikes_Import_Manager $instance
+     * @var self $instance
      */
     private static $instance;
 
@@ -27,7 +27,7 @@ class MybbStuff_SimpleLikes_Import_Manager
      */
     private $importers;
 
-    private function __construct(\DB_Base $db)
+    private function __construct(DB_Base $db)
     {
         $this->db = $db;
         $this->importers = [];
@@ -36,9 +36,9 @@ class MybbStuff_SimpleLikes_Import_Manager
     /**
      * Get an instance of the import manager.
      *
-     * @return MybbStuff_SimpleLikes_Import_Manager The singleton instance.
+     * @return Manager The singleton instance.
      */
-    public static function getInstance()
+    public static function getInstance(): self
     {
         if (!static::$instance) {
             global $db;
@@ -56,13 +56,13 @@ class MybbStuff_SimpleLikes_Import_Manager
      *
      * @throws \InvalidArgumentException Thrown if $importerClass does not exist or doesn't extend AbstractImporter.
      */
-    public function addImporter($importerClass = '')
+    public function addImporter(string $importerClass = ''): void
     {
         $importerClass = (string)$importerClass;
 
         if (class_exists($importerClass)) {
             $instance = new $importerClass($this->db);
-            if ($instance instanceof MybbStuff_SimpleLikes_Import_AbstractImporter) {
+            if ($instance instanceof AbstractImporter) {
                 $this->importers[] = $importerClass;
 
                 return;
@@ -77,9 +77,9 @@ class MybbStuff_SimpleLikes_Import_Manager
     /**
      * Get all of the registered importers.
      *
-     * @return MybbStuff_SimpleLikes_Import_AbstractImporter[]
+     * @return AbstractImporter[]
      */
-    public function getImporters()
+    public function getImporters(): array
     {
         $importers = [];
 

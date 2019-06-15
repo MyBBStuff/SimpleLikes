@@ -1,13 +1,16 @@
 <?php
+declare(strict_types=1);
 
-class MybbStuff_SimpleLikes_Import_ThankYouLikeImporter extends MybbStuff_SimpleLikes_Import_AbstractImporter
+namespace MybbStuff\SimpleLikes\Import;
+
+final class ThankYouLikeImporter extends AbstractImporter
 {
     /**
      * Get the title of the importer.
      *
      * @return string The title of the importer.
      */
-    public function getTitle()
+    public function getTitle(): string
     {
         return 'ThankYou Like Importer';
     }
@@ -17,7 +20,7 @@ class MybbStuff_SimpleLikes_Import_ThankYouLikeImporter extends MybbStuff_Simple
      *
      * @return string A short description of the importer.
      */
-    public function getDescription()
+    public function getDescription(): string
     {
         return "Imports likes from G33K's ThankYouLike plugin into SimpleLikes.";
     }
@@ -27,7 +30,7 @@ class MybbStuff_SimpleLikes_Import_ThankYouLikeImporter extends MybbStuff_Simple
      *
      * @return int The number of converted likes.
      */
-    public function importLikes()
+    public function importLikes(): int
     {
         $newLikes = [];
         $query = $this->db->simple_select('g33k_thankyoulike_thankyoulike', 'pid, uid');

@@ -1,39 +1,38 @@
 <?php
-/**
- *  Core Plugin File
- *
- *  A simple post like system.
- *
- * @package Simple Likes
- * @author  Euan T. <euan@euantor.com>
- * @license http://opensource.org/licenses/mit-license.php MIT license
- * @version 2.0.0
- */
+declare(strict_types=1);
+
+use MybbStuff\Core\ClassLoader;
+use MybbStuff\SimpleLikes\Import\Manager;
+use MybbStuff\SimpleLikes\LikeManager;
 
 defined(
     'IN_MYBB'
 ) or die('Direct initialization of this file is not allowed.<br /><br />Please make sure IN_MYBB is defined.');
 
-defined('MYBBSTUFF_CORE_PATH') or define('MYBBSTUFF_CORE_PATH', MYBB_ROOT . 'inc/plugins/MybbStuff/Core/');
-define('SIMPLELIKES_PLUGIN_PATH', MYBB_ROOT . 'inc/plugins/MybbStuff/SimpleLikes');
+defined('MYBBSTUFF_CORE_PATH') || define('MYBBSTUFF_CORE_PATH', __DIR__ . 'MybbStuff/Core');
+define('SIMPLELIKES_PLUGIN_PATH', __DIR__ . 'MybbStuff/SimpleLikes');
 
 defined('PLUGINLIBRARY') or define('PLUGINLIBRARY', MYBB_ROOT . 'inc/plugins/pluginlibrary.php');
 
-require_once MYBBSTUFF_CORE_PATH . 'ClassLoader.php';
+require_once MYBBSTUFF_CORE_PATH . '/src/ClassLoader.php';
 
-$classLoader = new MybbStuff_Core_ClassLoader();
-$classLoader->registerNamespace('MybbStuff_SimpleLikes', [SIMPLELIKES_PLUGIN_PATH . '/src']);
+$classLoader = ClassLoader::getInstance();
+$classLoader->registerNamespace(
+    'MybbStuff\\SimpleLikes\\',
+    SIMPLELIKES_PLUGIN_PATH . '/src/'
+);
 $classLoader->register();
 
-$importManager = MybbStuff_SimpleLikes_Import_Manager::getInstance();
-$importManager->addImporter('MybbStuff_SimpleLikes_Import_ThankYouLikeImporter');
+$importManager = Manager::getInstance();
+$importManager->addImporter('ThankYouLikeImporter');
 
 function simplelikes_info()
 {
-    global $lang, $plugins, $cache;
+    global $lang, $cache;
     if (isset($cache->cache['plugins']['active']['simplelikes'])) {
         simplelikes_tapatalk_integration();
     }
+
     return [
         'name' => 'Like System',
         'description' => 'A simple post like system.' . $lang->simplelikes_tapatalk_core_edits,
@@ -186,7 +185,7 @@ function simplelikes_uninstall()
 
 function simplelikes_activate()
 {
-    global $mybb, $db, $PL, $cache;
+    global $PL, $cache;
 
     if (!file_exists(PLUGINLIBRARY)) {
         flash_message('This plugin requires PluginLibrary, please ensure it is installed correctly.', 'error');
@@ -465,7 +464,7 @@ function simplelikesPostbit(&$post)
         $lang->load('simplelikes');
     }
 
-    $likeSystem = new MybbStuff_SimpleLikes_LikeManager($mybb, $db, $lang);
+    $likeSystem = new LikeManager($mybb, $db, $lang);
 
     if (is_string($pids)) {
         static $postLikes = null;
@@ -502,14 +501,28 @@ function simplelikesPostbit(&$post)
         $post['button_like'] = eval($templates->render('simplelikes_likebutton'));
     }
 
+    $tablePrefix = TABLE_PREFIX;
+
     // Get number of likes user has received
     if ($mybb->settings['simplelikes_get_num_likes_user_postbit']) {
         if (is_string($pids)) {
             static $postLikesReceived = null;
             if (!is_array($postLikesReceived)) {
                 $postLikesReceived = [];
-                $queryString = "SELECT p.uid, (SELECT COUNT(*) FROM %spost_likes l LEFT JOIN %sposts mp ON (l.post_id = mp.pid) WHERE mp.uid = p.uid) AS numLikes FROM %sposts p WHERE {$pids} GROUP BY p.uid";
-                $query = $db->query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX, TABLE_PREFIX));
+
+                $queryString = <<<SQL
+SELECT p.uid, 
+       (SELECT COUNT(*) 
+       FROM {$tablePrefix}post_likes l 
+           INNER JOIN {$tablePrefix}posts mp ON (l.post_id = mp.pid) 
+       WHERE mp.uid = p.uid) 
+           AS numLikes 
+FROM {$tablePrefix}posts p 
+WHERE {$pids} 
+GROUP BY p.uid
+SQL;
+                $query = $db->query($queryString);
+
                 while ($row = $db->fetch_array($query)) {
                     $postLikesReceived[(int)$row['uid']] = (int)$row['numLikes'];
                 }
@@ -517,10 +530,21 @@ function simplelikesPostbit(&$post)
         } else {
             $postLikesReceived = [];
             $pid = (int)$post['pid'];
-            $queryString = "SELECT p.uid, (SELECT COUNT(*) FROM %spost_likes l LEFT JOIN %sposts mp ON (l.post_id = mp.pid) WHERE mp.uid = p.uid) AS numLikes FROM %sposts p WHERE pid = {$pid} GROUP BY p.uid";
-            $query = $db->query(
-                sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX, TABLE_PREFIX)
-            );
+
+            $queryString = <<<SQL
+SELECT p.uid, 
+       (SELECT COUNT(*) 
+       FROM {$tablePrefix}post_likes l 
+           INNER JOIN {$tablePrefix}posts mp ON (l.post_id = mp.pid) 
+       WHERE mp.uid = p.uid) 
+           AS numLikes 
+FROM {$tablePrefix}posts p 
+WHERE pid = {$pid} 
+GROUP BY p.uid
+SQL;
+
+            $query = $db->query($queryString);
+
             $postLikesReceived[(int)$post['uid']] = (int)$db->fetch_field($query, 'numLikes');
         }
 
@@ -548,9 +572,16 @@ function simplelikesProfile()
     $usersLikes = my_number_format((int)$db->fetch_field($query, 'count'));
     $postsLiked = eval($templates->render('simplelikes_profile_total_likes'));
 
+    $tablePrefix = TABLE_PREFIX;
+
     // Number of likes user's posts have
-    $queryString = "SELECT COUNT(l.id) AS numLikes FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.uid = {$uid}";
-    $query = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
+    $queryString = <<<SQL
+SELECT COUNT(l.id) AS numLikes 
+FROM {$tablePrefix}post_likes l 
+    INNER JOIN {$tablePrefix}posts p ON (l.post_id = p.pid) 
+WHERE p.uid = {$uid}
+SQL;
+    $query = $db->write_query($queryString);
     $postLikes = my_number_format((int)$db->fetch_field($query, 'numLikes'));
     $likesReceived = eval($templates->render('simplelikes_profile_likes_received'));
 }
@@ -613,7 +644,7 @@ function simplelikesInitMyAlertsFormatter()
             $formatterManager = MybbStuff_MyAlerts_AlertFormatterManager::createInstance($mybb, $lang);
         }
 
-        $formatterManager->registerFormatter('MybbStuff_SimpleLikes_LikeFormatter');
+        $formatterManager->registerFormatter(\MybbStuff\SimpleLikes\LikeFormatter::class);
     }
 }
 
@@ -639,7 +670,7 @@ function simplelikesMisc()
             $pid = $mybb->get_input('post_id', MyBB::INPUT_INT);
             $post = get_post($pid);
 
-            $likeSystem = new MybbStuff_SimpleLikes_LikeManager($mybb, $db, $lang);
+            $likeSystem = new LikeManager($mybb, $db, $lang);
 
             $likeArray = $likeSystem->getLikes($pid);
 
@@ -705,8 +736,16 @@ function simplelikesMisc()
                 $where_sql .= " AND p.fid NOT IN ({$inactiveforums})";
             }
 
-            $queryString = "SELECT COUNT(*) AS numLikes FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE l.user_id = {$userId}{$where_sql}";
-            $query = $db->query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
+            $tablePrefix = TABLE_PREFIX;
+
+            $queryString = <<<SQL
+SELECT COUNT(*) AS numLikes 
+FROM {$tablePrefix}post_likes l 
+    INNER JOIN {$tablePrefix}posts p ON (l.post_id = p.pid) 
+WHERE l.user_id = {$userId}{$where_sql};
+SQL;
+
+            $query = $db->query($queryString);
             $count = $db->fetch_field($query, 'numLikes');
 
             $page = $mybb->get_input('page', MyBB::INPUT_INT);
@@ -737,8 +776,15 @@ function simplelikesMisc()
             add_breadcrumb($lang->simplelikes_likes_by_user, "misc.php?action=post_likes_by_user&user_id={$userId}");
 
             $likes = '';
-            $queryString = "SELECT * FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE l.user_id = {$userId}{$where_sql} ORDER BY l.id DESC LIMIT {$start}, {$perPage}";
-            $query = $db->query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
+            $queryString = <<<SQL
+SELECT * FROM {$tablePrefix}post_likes l 
+    INNER JOIN {$tablePrefix}posts p ON (l.post_id = p.pid) 
+WHERE l.user_id = {$userId}{$where_sql} 
+ORDER BY l.id DESC 
+LIMIT {$start}, {$perPage};
+SQL;
+
+            $query = $db->query($queryString);
             while ($like = $db->fetch_array($query)) {
                 $altbg = alt_trow();
                 $like['postlink'] = get_post_link((int)$like['post_id']) . '#pid' . (int)$like['post_id'];
@@ -786,7 +832,15 @@ function simplelikesMisc()
                     $where_sql .= " AND p.fid NOT IN ({$inactiveforums})";
                 }
 
-                $queryString = "SELECT COUNT(*) AS numLikes FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.uid = {$userId}{$where_sql} GROUP BY p.pid";
+                $tablePrefix = TABLE_PREFIX;
+
+                $queryString = <<<SQL
+SELECT COUNT(*) AS numLikes 
+FROM {$tablePrefix}post_likes l 
+    INNER JOIN {$tablePrefix}posts p ON (l.post_id = p.pid) 
+WHERE p.uid = {$userId}{$where_sql} 
+GROUP BY p.pid;
+SQL;
                 $query = $db->query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
                 $count = $db->num_rows($query);
 
@@ -826,7 +880,15 @@ function simplelikesMisc()
                 );
 
                 $likes = '';
-                $queryString = "SELECT *, COUNT(id) AS count FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.uid = {$userId}{$where_sql} GROUP BY p.pid ORDER BY l.id DESC LIMIT {$start}, {$perPage}";
+                $queryString = <<<SQL
+SELECT *, COUNT(id) AS numLikes 
+FROM {$tablePrefix}post_likes l 
+    INNER JOIN {$tablePrefix}posts p ON (l.post_id = p.pid) 
+WHERE p.uid = {$userId}{$where_sql} 
+GROUP BY p.pid 
+ORDER BY l.id DESC 
+LIMIT {$start}, {$perPage};
+SQL;
                 $query = $db->query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
                 while ($like = $db->fetch_array($query)) {
                     $altbg = alt_trow();
@@ -899,13 +961,13 @@ function simplelikesAjax()
             return;
         }
 
-        $likeSystem = new MybbStuff_SimpleLikes_LikeManager($mybb, $db, $lang);
+        $likeSystem = new LikeManager($mybb, $db, $lang);
 
         $buttonText = $lang->simplelikes_like;
 
         $result = $likeSystem->likePost($postId);
 
-        if ($result === MybbStuff_SimpleLikes_LikeManager::RESULT_LIKED) {
+        if ($result === LikeManager::RESULT_LIKED) {
             $buttonText = $lang->simplelikes_unlike;
         }
 
@@ -1131,7 +1193,7 @@ function simplelikes_tapatalk_get_edits()
                 '    $query = $db->simple_select(\'post_likes\', \'COUNT(id) AS count\', \'user_id = \' . $uid);',
                 '    $usersLikes = my_number_format((int)$db->fetch_field($query, \'count\'));',
                 '    ',
-                '    $queryString = "SELECT COUNT(l.id) AS count FROM %spost_likes l LEFT JOIN %sposts p ON (l.post_id = p.pid) WHERE p.uid = {$uid}";',
+                '    $queryString = "SELECT COUNT(l.id) AS count FROM %spost_likes l INNER JOIN %sposts p ON (l.post_id = p.pid) WHERE p.uid = {$uid}";',
                 '    $query = $db->write_query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));',
                 '    $postLikes = my_number_format((int)$db->fetch_field($query, \'count\'));',
                 '',

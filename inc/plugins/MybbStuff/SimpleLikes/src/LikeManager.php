@@ -1,16 +1,14 @@
 <?php
+declare(use_strict=1);
 
-/**
- * Likes class.
- *
- * Handles CRUD operations for post likes.
- *
- * @package Simple Likes
- * @author  Euan T. <euan@euantor.com>
- * @license http://opensource.org/licenses/mit-license.php MIT license
- * @version 2.0.0
- */
-class MybbStuff_SimpleLikes_LikeManager
+namespace MybbStuff\SimpleLikes;
+
+use DateTime;
+use DB_Base;
+use MyBB;
+use MyLanguage;
+
+class LikeManager
 {
     const RESULT_LIKED = 1;
 
@@ -49,8 +47,10 @@ class MybbStuff_SimpleLikes_LikeManager
      * @param int $postId The post id to (un)like.
      *
      * @return int The insert id or 0 if the action was a like deletion.
+     *
+     * @throws \Exception Thrown if the current date/time cannot be determined.
      */
-    public function likePost($postId)
+    public function likePost(int $postId): int
     {
         $postId = (int)$postId;
         $userId = (int)$this->mybb->user['uid'];
@@ -89,22 +89,37 @@ class MybbStuff_SimpleLikes_LikeManager
      *
      * @return array The likes, along with the user details for the user that performed the like.
      */
-    public function getLikes($pid)
+    public function getLikes($pid): array
     {
         $likes = [];
+
+        $tablePrefix = TABLE_PREFIX;
+
         if (is_string($pid)) {
             $inClause = str_replace('pid', 'l.post_id', $pid);
 
-            $queryString = "SELECT l.*, u.username, u.avatar, u.usergroup, u.displaygroup FROM %spost_likes l LEFT JOIN %susers u ON (l.user_id = u.uid) WHERE {$inClause}";
-            $query = $this->db->query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
+            $queryString = <<<SQL
+SELECT l.*, u.username, u.avatar, u.usergroup, u.displaygroup 
+FROM {$tablePrefix}post_likes l 
+LEFT JOIN {$tablePrefix}users u ON (l.user_id = u.uid) 
+WHERE {$inClause}
+SQL;
+
+            $query = $this->db->query($queryString);
             while ($like = $this->db->fetch_array($query)) {
                 $likes[(int)$like['post_id']][(int)$like['user_id']] = $like;
             }
         } else {
             $pid = (int)$pid;
 
-            $queryString = "SELECT l.*, u.username, u.avatar, u.usergroup, u.displaygroup FROM %spost_likes l LEFT JOIN %susers u ON (l.user_id = u.uid) WHERE l.post_id = {$pid}";
-            $query = $this->db->query(sprintf($queryString, TABLE_PREFIX, TABLE_PREFIX));
+            $queryString = <<<SQL
+SELECT l.*, u.username, u.avatar, u.usergroup, u.displaygroup 
+FROM {$tablePrefix}post_likes l 
+LEFT JOIN {$tablePrefix} users u ON (l.user_id = u.uid) 
+WHERE l.post_id = {$pid}
+SQL;
+
+            $query = $this->db->query($queryString);
             while ($like = $this->db->fetch_array($query)) {
                 $likes[(int)$like['user_id']] = $like;
             }
@@ -121,15 +136,13 @@ class MybbStuff_SimpleLikes_LikeManager
      *
      * @return string The formatted likes.
      */
-    public function formatLikes($postLikes, $post)
+    public function formatLikes(array $postLikes, array $post): string
     {
         $goTo = (int)$this->mybb->settings['simplelikes_num_users'];
         $likeArray = [];
         $likeString = '';
 
-        if (!isset($this->lang->simplelikes)) {
-            $this->lang->load('simplelikes');
-        }
+        $this->lang->load('simplelikes');
 
         if ($goTo == 0) {
             return '';

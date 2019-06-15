@@ -1,14 +1,12 @@
 <?php
+declare(strict_types=1);
+
+namespace MybbStuff\SimpleLikes\Import;
 
 /**
  * Base importer class to be extended by all custom importers.
- *
- * @package Simple Likes
- * @author  Euan T. <euan@euantor.com>
- * @license http://opensource.org/licenses/mit-license.php MIT license
- * @version 2.0.0
  */
-abstract class MybbStuff_SimpleLikes_Import_AbstractImporter
+abstract class AbstractImporter
 {
     /**
      * @var \DB_Base $db
@@ -25,19 +23,19 @@ abstract class MybbStuff_SimpleLikes_Import_AbstractImporter
      *
      * @return string The title of the importer.
      */
-    public abstract function getTitle();
+    public abstract function getTitle(): string;
 
     /**
      * Get the description for the importer.
      *
      * @return string A short description of the importer.
      */
-    public abstract function getDescription();
+    public abstract function getDescription(): string;
 
     /**
      * Perform the conversion of the likes from the 3rd party system.
      *
      * @return int The number of converted likes.
      */
-    public abstract function importLikes();
+    public abstract function importLikes(): int;
 }

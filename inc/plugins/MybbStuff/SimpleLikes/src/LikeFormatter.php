@@ -1,6 +1,9 @@
 <?php
+declare(strict_types=1);
 
-class MybbStuff_SimpleLikes_LikeFormatter extends MybbStuff_MyAlerts_Formatter_AbstractFormatter
+namespace MybbStuff\SimpleLikes;
+
+class LikeFormatter extends MybbStuff_MyAlerts_Formatter_AbstractFormatter
 {
     /**
      * Init function called before running formatAlert(). Used to load language
@@ -10,9 +13,7 @@ class MybbStuff_SimpleLikes_LikeFormatter extends MybbStuff_MyAlerts_Formatter_A
      */
     public function init()
     {
-        if (!isset($this->lang->simplelikes)) {
-            $this->lang->load('simplelikes');
-        }
+        $this->lang->load('simplelikes');
 
         $this->alertTypeName = 'simplelikes';
     }
@@ -32,7 +33,7 @@ class MybbStuff_SimpleLikes_LikeFormatter extends MybbStuff_MyAlerts_Formatter_A
      * @return string The formatted alert string.
      */
     public function formatAlert(
-        MybbStuff_MyAlerts_Entity_Alert $alert,
+        \MybbStuff_MyAlerts_Entity_Alert $alert,
         array $outputAlert
     ) {
         $alertContent = $alert->getExtraDetails();
@@ -55,13 +56,13 @@ class MybbStuff_SimpleLikes_LikeFormatter extends MybbStuff_MyAlerts_Formatter_A
      * Build a link to an alert's content so that the system can redirect to
      * it.
      *
-     * @param MybbStuff_MyAlerts_Entity_Alert $alert The alert to build the
+     * @param \MybbStuff_MyAlerts_Entity_Alert $alert The alert to build the
      *                                               link for.
      *
      * @return string The built alert, preferably an absolute link.
      */
     public function buildShowLink(
-        MybbStuff_MyAlerts_Entity_Alert $alert
+        \MybbStuff_MyAlerts_Entity_Alert $alert
     ) {
         $extraContent = $alert->getExtraDetails();
         $tid = -1;

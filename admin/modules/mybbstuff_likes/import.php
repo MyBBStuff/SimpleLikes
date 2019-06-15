@@ -21,7 +21,7 @@ if (!isset($lang->simplelikes)) {
 
 require_once MYBB_ROOT . '/inc/plugins/MybbStuff/SimpleLikes/src/Import/Manager.php';
 
-$importManager = MybbStuff_SimpleLikes_Import_Manager::getInstance();
+$importManager = Manager::getInstance();
 
 if (!isset($mybb->input['id'])) {
     $page->add_breadcrumb_item($lang->simplelikes, 'index.php?module=mybbstuff_likes');
