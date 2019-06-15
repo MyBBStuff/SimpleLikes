@@ -58,26 +58,76 @@ function simplelikes_install()
 	];
 	$cache->update('euantor_plugins', $euantorPlugins);
 
-	if (is_dir(SIMPLELIKES_PLUGIN_PATH . '/database/tables')) {
-		$dir = new DirectoryIterator(SIMPLELIKES_PLUGIN_PATH . '/database/tables');
-		foreach ($dir as $file) {
-			if (!$file->isDot() AND !$file->isDir() AND pathinfo($file->getFilename(), PATHINFO_EXTENSION) === 'sql') {
-				$createTableQueryString = str_replace(
-					['{PREFIX}', '{COLLATION}'],
-					[TABLE_PREFIX, $db->build_create_table_collation()],
-					file_get_contents($file->getPathName()));
+	$prefix = TABLE_PREFIX;
 
-				$db->write_query($createTableQueryString);
-			}
+	if (!$db->table_exists('post_likes')) {
+		switch ($db->type) {
+			case 'pgsql':
+			case 'mysql':
+			case 'mysqli':
+				$createTableQuery = <<<SQL
+CREATE TABLE {$prefix}post_likes(
+	id SERIAL PRIMARY KEY,
+	post_id INT NOT NULL,
+	user_id INT NOT NULL,
+	created_at TIMESTAMP,
+	CONSTRAINT unique_post_user_id UNIQUE (post_id,user_id)
+);
+
+CREATE INDEX post_id_index ON {$prefix}post_likes (post_id);
+
+CREATE INDEX user_id_index ON {$prefix}post_likes (user_id);
+SQL;
+				break;
+			case 'sqlite':
+				$createTableQuery = <<<SQL
+CREATE TABLE IF NOT EXISTS {$prefix}post_likes(
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	post_id INTEGER unsigned NOT NULL,
+	user_id INTEGER unsigned NOT NULL,
+	created_at TIMESTAMP,
+	CONSTRAINT unique_post_user_id UNIQUE (post_id,user_id)
+);
+
+CREATE INDEX post_id_index ON {$prefix}post_likes (post_id);
+
+CREATE INDEX user_id_index ON {$prefix}post_likes (user_id);
+SQL;
+				break;
+			default:
+				flash_message("Unsupported database engine '{$db->type}'", 'error');
+				admin_redirect('index.php?module=config-plugins');
+
+				return;
 		}
+
+		$db->write_query($createTableQuery);
 	}
 
 	if (!$db->field_exists('simplelikes_can_like', 'usergroups')) {
-		$db->add_column('usergroups', 'simplelikes_can_like', "INT(1) NOT NULL DEFAULT 0");
+		switch ($db->type) {
+			case 'pgsql':
+				$columnDefinition = "smallint NOT NULL default '0'";
+				break;
+			default:
+				$columnDefinition = "tinyint(1) NOT NULL default '0'";
+				break;
+		}
+
+		$db->add_column('usergroups', 'simplelikes_can_like', $columnDefinition);
 	}
 
 	if (!$db->field_exists('simplelikes_can_view_likes', 'usergroups')) {
-		$db->add_column('usergroups', 'simplelikes_can_view_likes', "INT(1) NOT NULL DEFAULT 0");
+		switch ($db->type) {
+			case 'pgsql':
+				$columnDefinition = "smallint NOT NULL default '0'";
+				break;
+			default:
+				$columnDefinition = "tinyint(1) NOT NULL default '0'";
+				break;
+		}
+
+		$db->add_column('usergroups', 'simplelikes_can_view_likes', $columnDefinition);
 	}
 
 	$db->update_query(
@@ -151,7 +201,6 @@ function simplelikes_activate()
 	}
 
 	$oldVersion = '';
-	$newVersion = '';
 
 	$pluginInfo = simplelikes_info();
 	$pluginsCache = $cache->read('euantor_plugins');
