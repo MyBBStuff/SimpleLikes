@@ -4,8 +4,8 @@
  *
  */
 
-$l['setting_group_simplelikes'] = "Like System Settings";
-$l['setting_group_simplelikes_desc'] = "Settings for the like system.";
+$l['setting_group_simplelikes'] = "SimpleLikes Settings";
+$l['setting_group_simplelikes_desc'] = "Settings for the SimpleLikes plugin.";
 $l['setting_simplelikes_num_users'] = "Number of \"likers\" to show per post";
 $l['setting_simplelikes_num_users_desc'] = "Set the number of most recent likers to show in the post like bar.";
 $l['setting_simplelikes_can_like_own'] = "Let users like own posts?";
