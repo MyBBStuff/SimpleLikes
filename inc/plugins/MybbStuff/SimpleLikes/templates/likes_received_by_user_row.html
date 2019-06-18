@@ -6,9 +6,6 @@
 	</td>
 	<td class="{$altbg}">
 		<a href="#"
-		   onclick="MyBB.popupWindow('/misc.php?action=post_likes&amp;post_id={$like['post_id']}', null, false); return false;">{$like['count']}</a>
-	</td>
-	<td class="{$altbg}">
-		{$like['created_at']}
+		   onclick="MyBB.popupWindow('/misc.php?action=post_likes&amp;ajax=1&amp;post_id={$like['pid']}', null, false); return false;">{$like['count']}</a>
 	</td>
 </tr>
