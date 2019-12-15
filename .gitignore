@@ -11,3 +11,6 @@
 *.sublime-project
 
 .idea/
+
+.DS_Store
+.phpintel/
