@@ -73,11 +73,11 @@ CREATE TABLE {$prefix}post_likes(
 	created_at TIMESTAMP,
 	CONSTRAINT unique_post_user_id UNIQUE (post_id,user_id)
 );
-
-CREATE INDEX post_id_index ON {$prefix}post_likes (post_id);
-
-CREATE INDEX user_id_index ON {$prefix}post_likes (user_id);
 SQL;
+
+                $createPostIdIndexQuery = "CREATE INDEX post_id_index ON {$prefix}post_likes (post_id);";
+
+                $createUserIdIndexQuery = "CREATE INDEX user_id_index ON {$prefix}post_likes (user_id);";
                 break;
             case 'sqlite':
                 $createTableQuery = <<<SQL
@@ -88,11 +88,11 @@ CREATE TABLE IF NOT EXISTS {$prefix}post_likes(
 	created_at TIMESTAMP,
 	CONSTRAINT unique_post_user_id UNIQUE (post_id,user_id)
 );
-
-CREATE INDEX post_id_index ON {$prefix}post_likes (post_id);
-
-CREATE INDEX user_id_index ON {$prefix}post_likes (user_id);
 SQL;
+
+                $createPostIdIndexQuery = "CREATE INDEX post_id_index ON {$prefix}post_likes (post_id);";
+
+                $createUserIdIndexQuery = "CREATE INDEX user_id_index ON {$prefix}post_likes (user_id);";
                 break;
             default:
                 flash_message("Unsupported database engine '{$db->type}'", 'error');
@@ -102,6 +102,8 @@ SQL;
         }
 
         $db->write_query($createTableQuery);
+        $db->write_query($createPostIdIndexQuery);
+        $db->write_query($createUserIdIndexQuery);
     }
 
     if (!$db->field_exists('simplelikes_can_like', 'usergroups')) {
